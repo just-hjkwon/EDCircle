@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   cv::imshow("image", input_image);
   cv::imshow("filtered", filtered);
 
-  EdgeDrawing edge_drawing(image, 36.0f, 8.0f, 4);
+  EdgeDrawing edge_drawing(image, 36.0f, 8.0f, 1);
 
   cv::waitKey(0);
 

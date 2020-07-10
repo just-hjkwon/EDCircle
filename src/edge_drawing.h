@@ -20,6 +20,11 @@ class EdgeDrawing {
  private:
   void PrepareEdgeMap(GrayImage& image);
   void ExtractAnchor();
+  void ConnectingAnchors();
+  void DoSmartRouteToLeft(Position start_position);
+  void DoSmartRouteToRight(Position start_position);
+  void DoSmartRouteToUp(Position start_position);
+  void DoSmartRouteToDown(Position start_position);
 
  private:
   std::size_t width_;
@@ -36,6 +41,7 @@ class EdgeDrawing {
   std::shared_ptr<Image<unsigned char>> direction_map_;
 
   std::vector<Position> anchors_;
+  std::shared_ptr<Image<unsigned char>> edge_map_;
 };
 
 #endif

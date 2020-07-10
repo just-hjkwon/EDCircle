@@ -17,10 +17,10 @@ Filter FilterFactory::CreateGaussianFilter(std::size_t filter_size,
     auto y_ptr = buffer_ptr + (filter_size * y);
 
     for (auto x = 0; x < filter_size; ++x) {
-      float x_term = float((center - x) * (center - x)) / sigma_denominator;
-      float y_term = float((center - y) * (center - y)) / sigma_denominator;
+      float x_term = float((center - x) * (center - x));
+      float y_term = float((center - y) * (center - y));
 
-      y_ptr[x] = exp(-1.0f * float(x_term + y_term));
+      y_ptr[x] = exp(-1.0f * float(x_term + y_term) / sigma_denominator);
       filter_sum += y_ptr[x];
     }
   }
@@ -45,6 +45,24 @@ Filter FilterFactory::PrewittYFilter() {
   std::vector<float> buffer = { -1.0f,  -1.0f, -1.0f,
                                 0.0f, 0.0f, 0.0f,
                                1.0f, 1.0f, 1.0f };
+
+  const std::size_t filter_size = 3;
+  return Filter(filter_size, buffer.data());
+}
+
+Filter FilterFactory::SobelXFilter() {
+  std::vector<float> buffer = { -1.0f, 0.0f, 1.0f, 
+                                -2.0f, 0.0f, 2.0f,
+                                -1.0f, 0.0f, 1.0f};
+
+  const std::size_t filter_size = 3;
+  return Filter(filter_size, buffer.data());
+}
+
+Filter FilterFactory::SobelYFilter() {
+  std::vector<float> buffer = { -1.0f, -2.0f, -1.0f,
+                                0.0f, 0.0f, 0.0f,
+                                1.0f,  2.0f,  1.0f};
 
   const std::size_t filter_size = 3;
   return Filter(filter_size, buffer.data());
