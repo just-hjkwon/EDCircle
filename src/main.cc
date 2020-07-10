@@ -11,6 +11,14 @@ int main (int argc, char *argv[]) {
 
     Filter gaussian_filter = FilterFactory::CreateGaussianFilter(5, 1.0);
 
-    
+    image.ApplyFilter(gaussian_filter);
+
+    cv::Mat filtered = image.toMat();
+
+    cv::imshow("image", input_image);
+    cv::imshow("filtered", filtered);
+
+    cv::waitKey(0);
+
     return 0;
 }
