@@ -21,18 +21,6 @@ void GrayImage::ApplyFilter(Filter &filter) {
       float value =
           filter.DoFilter(source_ptr, Position(x, y), width_, height_);
       filtered_y_ptr[x] = unsigned char(std::min(255, std::max(0, int(value))));
-      //std::vector<unsigned char> flattened_patch;
-      //flattened_patch.reserve(filter_width * filter_height);
-
-      //for (auto fy = filter_y_start, i = 0; i < filter_height; ++fy, ++i) {
-      //  auto source_y = (source_y_ptr + (fy * int(width_)));
-      //  flattened_patch.insert(flattened_patch.end(), source_y,
-      //                         source_y + filter_width);
-      //}
-
-      //float filtered_value = filter.DoFilter(flattened_patch);
-      //filtered_y_ptr[x] =
-      //    unsigned char(std::min(255, std::max(0, int(filtered_value))));
     }
   }
 
