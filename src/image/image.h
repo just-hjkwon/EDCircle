@@ -14,6 +14,10 @@ class Image {
   }
   Image() = delete;
 
+ public:
+  std::size_t width() { return width_; };
+  std::size_t height() { return height_; };
+
  protected:
   std::size_t width_;
   std::size_t height_;

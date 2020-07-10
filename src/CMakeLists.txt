@@ -44,5 +44,9 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/image/image.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/gray_image.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/gray_image.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/float_image.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/float_image.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/filters.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/filters.h"
 )
 
