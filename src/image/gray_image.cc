@@ -2,6 +2,11 @@
 
 
 void GrayImage::ApplyFilter(Filter &filter) {
+  GrayImage filtered_image = MakeGrayFilteredImage(filter);
+  buffer_ = filtered_image.buffer_;
+}
+
+GrayImage GrayImage::MakeGrayFilteredImage(Filter &filter) {
   auto filter_center = filter.center();
   auto filter_width = filter.width();
   auto filter_height = filter.height();
@@ -10,7 +15,7 @@ void GrayImage::ApplyFilter(Filter &filter) {
 
   std::vector<unsigned char> filtered_buffer;
   filtered_buffer.resize(buffer_.size());
-  
+
   auto source_ptr = buffer_.data();
   auto filtered_ptr = filtered_buffer.data();
 
@@ -24,7 +29,32 @@ void GrayImage::ApplyFilter(Filter &filter) {
     }
   }
 
-  buffer_ = filtered_buffer;
+  return GrayImage(width_, height_, filtered_buffer.data());
+}
+
+FloatImage GrayImage::MakeFloatFilteredImage(Filter &filter) {
+  auto filter_center = filter.center();
+  auto filter_width = filter.width();
+  auto filter_height = filter.height();
+  int filter_y_start = filter_center.y - filter_height;
+  int filter_x_start = filter_center.x - filter_width;
+
+  std::vector<float> filtered_buffer;
+  filtered_buffer.resize(buffer_.size());
+
+  auto source_ptr = buffer_.data();
+  auto filtered_ptr = filtered_buffer.data();
+
+  for (auto y = 0; y < height_; ++y) {
+    auto filtered_y_ptr = filtered_ptr + (y * width_);
+
+    for (auto x = 0; x < width_; ++x) {
+      filtered_y_ptr[x] =
+              filter.DoFilter(source_ptr, Position(x, y), width_, height_);
+    }
+  }
+
+  return FloatImage(width_, height_, filtered_buffer.data());
 }
 
 cv::Mat GrayImage::toMat() {

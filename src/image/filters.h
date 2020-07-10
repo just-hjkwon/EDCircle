@@ -24,6 +24,8 @@ class Filter : public FloatImage {
 class FilterFactory {
  public:
   static Filter CreateGaussianFilter(std::size_t filter_size, float sigma);
+  static Filter PrewittXFilter();
+  static Filter PrewittYFilter();
 };
 
 template <typename T>
