@@ -8,7 +8,8 @@
 
 class EdgeDrawing {
  public:
-  EdgeDrawing(GrayImage& image, float magnitude_threshold);
+  EdgeDrawing(GrayImage& image, float magnitude_threshold,
+              float anchor_threshold, int anchor_extraction_interval);
 
  public:
   enum class EdgeDirection : unsigned char {
@@ -17,13 +18,24 @@ class EdgeDrawing {
   };
 
  private:
-  void PrepareEdgeMap(GrayImage& image, float magnitude_threshold);
+  void PrepareEdgeMap(GrayImage& image);
+  void ExtractAnchor();
+
+ private:
+  std::size_t width_;
+  std::size_t height_;
+
+  float magnitude_threshold_;
+  float anchor_threshold_;
+  int anchor_extraction_interval_;
 
  private:
   std::shared_ptr<FloatImage> x_gradient_;
   std::shared_ptr<FloatImage> y_gradient_;
   std::shared_ptr<FloatImage> magnitude_;
   std::shared_ptr<Image<unsigned char>> direction_map_;
+
+  std::vector<Position> anchors_;
 };
 
 #endif

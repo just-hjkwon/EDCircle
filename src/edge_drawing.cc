@@ -2,12 +2,19 @@
 
 #include "image/filters.h"
 
+EdgeDrawing::EdgeDrawing(GrayImage& image, float magnitude_threshold,
+                         float anchor_threshold, int anchor_extraction_interval)
+    : magnitude_threshold_(magnitude_threshold),
+      anchor_threshold_(anchor_threshold),
+      anchor_extraction_interval_(anchor_extraction_interval) {
+  width_ = image.width();
+  height_ = image.height();
 
-EdgeDrawing::EdgeDrawing(GrayImage& image, float magnitude_threshold) {
-  PrepareEdgeMap(image, magnitude_threshold);
+  PrepareEdgeMap(image);
+  ExtractAnchor();
 }
 
-void EdgeDrawing::PrepareEdgeMap(GrayImage& image, float magnitude_threshold) {
+void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
   Filter prewitt_x = FilterFactory::PrewittXFilter();
   Filter prewitt_y = FilterFactory::PrewittYFilter();
 
@@ -31,10 +38,10 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image, float magnitude_threshold) {
 
     auto magnitude_ptr = magnitude.data() + (width * y);
     auto direction_ptr = direction.data() + (width * y);
-     
+
     for (auto x = 0; x < width; ++x) {
       float magnitude = sqrt((x_ptr[x] * x_ptr[x]) + (y_ptr[x] * y_ptr[x]));
-      if (magnitude >= magnitude_threshold) {
+      if (magnitude >= magnitude_threshold_) {
         magnitude_ptr[x] = magnitude;
       } else {
         magnitude_ptr[x] = 0.0f;
@@ -52,3 +59,35 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image, float magnitude_threshold) {
   direction_map_ =
       std::make_shared<Image<unsigned char>>(width, height, direction.data());
 }
+
+void EdgeDrawing::ExtractAnchor() {
+  anchors_.clear();
+
+  int x_start = std::max(1, anchor_extraction_interval_ / 2);
+  int y_start = std::max(1, anchor_extraction_interval_ / 2);
+
+  for (auto y = y_start; y < height_ - 1; y += anchor_extraction_interval_) {
+    auto direction_map_ptr = direction_map_->buffer() + (y * width_);
+    auto magnitude_ptr = magnitude_->buffer() + (y * width_);
+
+    for (auto x = x_start; x < width_ - 1; x += anchor_extraction_interval_) {
+      float magnitude = magnitude_ptr[x];
+      float neighbor0 = 0.0f;
+      float neighbor1 = 0.0f;
+
+      if (direction_map_ptr[x] == (unsigned char)EdgeDirection::HorizontalEdge) {
+        neighbor0 = magnitude_ptr[x - 1];
+        neighbor1 = magnitude_ptr[x + 1];
+      } else {
+        neighbor0 = magnitude_ptr[x - width_];
+        neighbor1 = magnitude_ptr[x + width_];
+      }
+
+      if (magnitude - neighbor0 > anchor_threshold_ &&
+          magnitude - neighbor1 > anchor_threshold_) {
+        anchors_.push_back(Position(x, y));
+      }
+    }
+  }
+}
+
