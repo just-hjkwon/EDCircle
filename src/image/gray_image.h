@@ -1,3 +1,6 @@
+#ifndef IMAGE__GRAY_IMAGE_H_
+#define IMAGE__GRAY_IMAGE_H_
+
 #include <opencv2/core.hpp>
 
 #include "image.h"
@@ -10,3 +13,5 @@ class GrayImage : public Image<unsigned char> {
 
   static GrayImage FromMat(cv::Mat &cv_image);
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef IMAGE__IMAGE_H_
+#define IMAGE__IMAGE_H_
+
 #include <memory>
 #include <opencv2/core.hpp>
 
@@ -11,8 +14,10 @@ class Image {
   }
   Image() = delete;
 
- private:
+ protected:
   std::size_t width_;
   std::size_t height_;
   std::vector<T> buffer_;
 };
+
+#endif
