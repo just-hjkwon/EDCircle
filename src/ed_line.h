@@ -1,14 +1,14 @@
-#ifndef EDLINE_H_
-#define EDLINE_H_
+#ifndef ED_LINE_H_
+#define ED_LINE_H_
 
-#include "EDPF.h"
+#include "edpf.h"
 #include "image/gray_image.h"
 
 class LineSegment {
  public:
   EdgeSegment edges;
-  float parameters[2] = {0.0f, 0.0f};
-  float fitting_error = 0.0f;
+  float parameters_[2] = {0.0f, 0.0f};
+  float fitting_error_ = 0.0f;
   bool is_parameter_of_x = true;
 };
 

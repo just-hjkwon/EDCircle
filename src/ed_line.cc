@@ -1,4 +1,4 @@
-#include "EDLine.h"
+#include "ed_line.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -33,11 +33,11 @@ float EDLine::ComputeFitError(const LineSegment &line, const Position &pos) {
   float error = 0.0f;
 
   if (line.is_parameter_of_x == true) {
-    error = abs(line.parameters[0] * pos.x - pos.y + line.parameters[1]) /
-            sqrt(line.parameters[0] * line.parameters[0] + 1);
+    error = abs(line.parameters_[0] * pos.x - pos.y + line.parameters_[1]) /
+            sqrt(line.parameters_[0] * line.parameters_[0] + 1);
   } else {
-    error = abs(-pos.x + line.parameters[0] * pos.y + line.parameters[1]) /
-            sqrt(line.parameters[0] * line.parameters[0] + 1);
+    error = abs(-pos.x + line.parameters_[0] * pos.y + line.parameters_[1]) /
+            sqrt(line.parameters_[0] * line.parameters_[0] + 1);
   }
 
   return error;
@@ -47,9 +47,9 @@ bool EDLine::isValidLineSegment(LineSegment line) {
   float line_degree = 0.0f;
 
   if (line.is_parameter_of_x == true) {
-    line_degree = atan2(line.parameters[0], 1.0f);
+    line_degree = atan2(line.parameters_[0], 1.0f);
   } else {
-    line_degree = atan2(1.0f, line.parameters[0]);
+    line_degree = atan2(1.0f, line.parameters_[0]);
   }
 
   if (line_degree >= M_PI / 2.0f) {
@@ -152,8 +152,8 @@ LineSegment EDLine::FitLine(const EdgeSegment &segment) {
     float parameter_b =
         ((-sum_x * sum_xy) + (sum_xx * sum_y)) / inv_denominator_by_x;
 
-    line.parameters[0] = parameter_a;
-    line.parameters[1] = parameter_b;
+    line.parameters_[0] = parameter_a;
+    line.parameters_[1] = parameter_b;
   } else {
     line.is_parameter_of_x = false;
 
@@ -162,14 +162,14 @@ LineSegment EDLine::FitLine(const EdgeSegment &segment) {
     float parameter_b =
         ((-sum_y * sum_xy) + (sum_yy * sum_x)) / inv_denominator_by_y;
 
-    line.parameters[0] = parameter_a;
-    line.parameters[1] = parameter_b;
+    line.parameters_[0] = parameter_a;
+    line.parameters_[1] = parameter_b;
   }
 
   line.edges = segment;
 
   float error = ComputeFitError(line, segment);
-  line.fitting_error = error;
+  line.fitting_error_ = error;
 
   return line;
 }
@@ -216,7 +216,7 @@ std::vector<LineSegment> EDLine::ExtractLineSegments(
 
     LineSegment line = FitLine(_segment);
 
-    while (line.fitting_error > 1.0f) {
+    while (line.fitting_error_ > 1.0f) {
       if (line_segment_end == segment.end()) {
         break;
       }
@@ -228,7 +228,7 @@ std::vector<LineSegment> EDLine::ExtractLineSegments(
       line = FitLine(_segment);
     }
 
-    if (line.fitting_error > 1.0f) {
+    if (line.fitting_error_ > 1.0f) {
       break;
     }
 
