@@ -26,7 +26,7 @@ class EdgeDrawing {
  public:
   void DetectEdge(GrayImage& image);
 
- private:
+ protected:
   void PrepareEdgeMap(GrayImage& image);
   void ExtractAnchor();
   void ConnectingAnchors();
@@ -43,7 +43,7 @@ class EdgeDrawing {
   std::size_t get_offset(Position pos);
   bool isValidPosition(Position pos);
 
- private:
+ protected:
   std::size_t width_;
   std::size_t height_;
 
@@ -51,7 +51,7 @@ class EdgeDrawing {
   float anchor_threshold_;
   int anchor_extraction_interval_;
 
- private:
+ protected:
   std::shared_ptr<FloatImage> x_gradient_;
   std::shared_ptr<FloatImage> y_gradient_;
   std::shared_ptr<FloatImage> magnitude_;
