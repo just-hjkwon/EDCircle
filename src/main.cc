@@ -15,7 +15,8 @@ int main(int argc, char *argv[]) {
 
   image.ApplyFilter(gaussian_filter);
 
-  cv::Mat filtered = image.toMat();
+  EdgeDrawing edge_drawing(36.0f, 8.0f, 1);
+  edge_drawing.DetectEdge(image);
 
   cv::imshow("image", input_image);
   cv::imshow("filtered", filtered);
