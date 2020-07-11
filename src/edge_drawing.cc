@@ -43,7 +43,7 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
 
     for (auto x = 0; x < width; ++x) {
       float magnitude = sqrt((x_ptr[x] * x_ptr[x]) + (y_ptr[x] * y_ptr[x]));
-      if (magnitude >= magnitude_threshold_) {
+      if (magnitude > magnitude_threshold_) {
         magnitude_ptr[x] = magnitude;
       } else {
         magnitude_ptr[x] = 0.0f;
@@ -104,7 +104,6 @@ void EdgeDrawing::ConnectingAnchors() {
                                                      edge_map_buffer.data());
 
   auto direction_map_ptr = direction_map_->buffer();
-  auto magnitude_ptr = magnitude_->buffer();
 
   edge_segments_.clear();
   edge_segments_.reserve(anchors_.size());
@@ -154,17 +153,17 @@ void EdgeDrawing::ConnectingAnchors() {
         float magnitude = magnitudeAt(next_position);
         bool edge = is_edge(next_position);
 
-        if (push_back == true) {
-          edge_segment.push_back(next_position);
-        } else {
-          edge_segment.push_front(next_position);
-        }
-
         if (magnitude == 0.0f || edge == true) {
           break;
         }
 
         set_edge(next_position, true);
+
+        if (push_back == true) {
+          edge_segment.push_back(next_position);
+        } else {
+          edge_segment.push_front(next_position);
+        }
 
         EdgeDirection next_direction = directionAt(next_position);
 
