@@ -1,13 +1,23 @@
 #include "EDLine.h"
 
-EDLine::EDLine() : EDPF() {}
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include <opencv2/highgui.hpp>
+
+EDLine::EDLine() : EDPF() {
+  anchor_threshold_ = 2.0f;
+  aligned_degree_treshold_ = M_PI / 8.0f;
+  precision_ = 1.0f / 8.0f;
+}
 
 void EDLine::DetectLine(GrayImage &image) {
   DetectEdge(image);
   ExtractLine();
 }
 
-float EDLine::ComputeFitError(const Line &line, const EdgeSegment &segment) {
+float EDLine::ComputeFitError(const LineSegment &line,
+                              const EdgeSegment &segment) {
   float error = 0.0f;
 
   for (const auto &s : segment) {
@@ -19,7 +29,7 @@ float EDLine::ComputeFitError(const Line &line, const EdgeSegment &segment) {
   return error;
 }
 
-float EDLine::ComputeFitError(const Line &line, const Position &pos) {
+float EDLine::ComputeFitError(const LineSegment &line, const Position &pos) {
   float error = 0.0f;
 
   if (line.is_parameter_of_x == true) {
@@ -33,7 +43,87 @@ float EDLine::ComputeFitError(const Line &line, const Position &pos) {
   return error;
 }
 
-Line EDLine::FitLine(const EdgeSegment &segment) {
+bool EDLine::isValidLineSegment(LineSegment line) {
+  float line_degree = 0.0f;
+
+  if (line.is_parameter_of_x == true) {
+    line_degree = atan2(line.parameters[0], 1.0f);
+  } else {
+    line_degree = atan2(1.0f, line.parameters[0]);
+  }
+
+  if (line_degree >= M_PI / 2.0f) {
+    line_degree -= M_PI;
+  } else if (line_degree <= -M_PI / 2.0f) {
+    line_degree += M_PI;
+  }
+
+  int aligned_edge_count = 0;
+
+  for (const auto e : line.edges) {
+    std::size_t offset = get_offset(e.first);
+
+    float gx = x_gradient_->buffer()[offset];
+    float gy = y_gradient_->buffer()[offset];
+
+    if (gy < 0) {
+      gy *= -1.0f;
+    } else {
+      gx *= -1.0f;
+    }
+
+    float edge_degree = atan2(gx, gy);
+    float degree_difference = abs(line_degree - edge_degree);
+    if (line_degree >= 0.0f && edge_degree < 0.0f) {
+      degree_difference =
+          std::min(degree_difference, abs(line_degree - float(edge_degree + M_PI)));
+    } else if (line_degree < 0.0f && edge_degree >= 0.0f) {
+      degree_difference = std::min(degree_difference,
+                                abs(line_degree - float(edge_degree - M_PI)));
+    }
+
+    if (degree_difference < aligned_degree_treshold_) {
+      aligned_edge_count++;
+    }
+  }
+
+  float nfa = getSegmentNFA(int(line.edges.size()), aligned_edge_count);
+
+  if (nfa <= 1.0f) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+float EDLine::getSegmentNFA(int segment_length, int aligned_count) {
+  const float N = float(width_ * height_ * width_ * height_);
+
+  float factorial = 0.0f;
+  for (auto i = aligned_count; i <= segment_length; ++i) {
+    int diff1 = segment_length - i;
+    int diff2 = segment_length - diff1;
+    int bigger_diff = std::max(diff1, diff2);
+    int smaller_diff = std::min(diff1, diff2);
+
+    float _f = 1.0f;
+
+    for (auto n = bigger_diff + 1; n <= segment_length; ++n) {
+      _f *= float(n);
+    }
+    for (auto n = 2; n <= smaller_diff; ++n) {
+      _f /= float(n);
+    }
+
+    _f *= pow(precision_, float(i)) *
+          pow(1.0f - precision_, float(segment_length - i));
+    factorial += _f;
+  }
+
+  return N * factorial;
+}
+
+LineSegment EDLine::FitLine(const EdgeSegment &segment) {
   float sum_xx = 0.0f;
   float sum_yy = 0.0f;
   float sum_xy = 0.0f;
@@ -52,7 +142,7 @@ Line EDLine::FitLine(const EdgeSegment &segment) {
   float inv_denominator_by_x = (sum_xx * n) - (sum_x * sum_x);
   float inv_denominator_by_y = (sum_yy * n) - (sum_y * sum_y);
 
-  Line line;
+  LineSegment line;
 
   if (inv_denominator_by_x >= inv_denominator_by_y) {
     line.is_parameter_of_x = true;
@@ -76,6 +166,8 @@ Line EDLine::FitLine(const EdgeSegment &segment) {
     line.parameters[1] = parameter_b;
   }
 
+  line.edges = segment;
+
   float error = ComputeFitError(line, segment);
   line.fitting_error = error;
 
@@ -86,13 +178,25 @@ void EDLine::ExtractLine() {
   minimum_line_length_ = int(
       round(-4.0f * log(sqrt(float(width_) * float(height_))) / log(0.125f)));
 
-  for (auto &segment : edge_segments_) {
-    std::vector<Line> line_segments = ExtractLineSegments(segment);
+  line_segments_.clear();
+  line_segments_.reserve(width_ * height_);
+
+  for (auto &edge : edge_segments_) {
+    std::vector<LineSegment> line_segments = ExtractLineSegments(edge);
+
+    for (auto &line : line_segments) {
+      if (isValidLineSegment(line) == true) {
+        line_segments_.push_back(line);
+      }
+    }
   }
+
+  line_segments_.shrink_to_fit();
 }
 
-std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment segment) {
-  std::vector<Line> line_segments;
+std::vector<LineSegment> EDLine::ExtractLineSegments(
+    const EdgeSegment segment) {
+  std::vector<LineSegment> line_segments;
 
   EdgeSegment::const_iterator line_segment_begin = segment.begin();
   EdgeSegment::const_iterator line_segment_end = segment.begin();
@@ -110,7 +214,7 @@ std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment segment) {
       break;
     }
 
-    Line line = FitLine(_segment);
+    LineSegment line = FitLine(_segment);
 
     while (line.fitting_error > 1.0f) {
       if (line_segment_end == segment.end()) {

@@ -26,6 +26,11 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
   FloatImage x_gradient = image.MakeFloatFilteredImage(edge_x_filter);
   FloatImage y_gradient = image.MakeFloatFilteredImage(edge_y_filter);
 
+  x_gradient_ =
+      std::make_shared<FloatImage>(width_, height_, x_gradient.buffer());
+  y_gradient_ =
+      std::make_shared<FloatImage>(width_, height_, y_gradient.buffer());
+
   std::size_t width = image.width();
   std::size_t height = image.height();
 
