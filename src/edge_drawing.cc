@@ -29,11 +29,13 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
   std::vector<unsigned char> direction(width * height);
 
   for (auto y = 0; y < height; ++y) {
-    auto x_ptr = x_gradient.buffer() + (width * y);
-    auto y_ptr = y_gradient.buffer() + (width * y);
+    std::size_t offset = get_offset(Position(0, y));
 
-    auto magnitude_ptr = magnitude.data() + (width * y);
-    auto direction_ptr = direction.data() + (width * y);
+    auto x_ptr = x_gradient.buffer() + offset;
+    auto y_ptr = y_gradient.buffer() + offset;
+
+    auto magnitude_ptr = magnitude.data() + offset;
+    auto direction_ptr = direction.data() + offset;
 
     for (auto x = 0; x < width; ++x) {
       float magnitude = sqrt((x_ptr[x] * x_ptr[x]) + (y_ptr[x] * y_ptr[x]));
@@ -58,6 +60,7 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
 
 void EdgeDrawing::ExtractAnchor() {
   anchors_.clear();
+  anchors_.reserve(width_ * height_);
 
   int x_start = std::max(1, anchor_extraction_interval_ / 2);
   int y_start = std::max(1, anchor_extraction_interval_ / 2);
@@ -86,6 +89,8 @@ void EdgeDrawing::ExtractAnchor() {
       }
     }
   }
+
+  anchors_.shrink_to_fit();
 }
 
 void EdgeDrawing::ConnectingAnchors() {
@@ -225,12 +230,17 @@ inline float EdgeDrawing::magnitudeAt(Position pos) {
   return magnitude_->buffer()[offset];
 }
 
-EdgeDrawing::EdgeDirection EdgeDrawing::directionAt(Position pos) {
+inline EdgeDrawing::EdgeDirection EdgeDrawing::directionAt(Position pos) {
   std::size_t offset = get_offset(pos);
   return (EdgeDirection)(direction_map_->buffer()[offset]);
 }
 
-void EdgeDrawing::set_edge(Position pos, bool value) {
+void EdgeDrawing::set_direction(Position pos, EdgeDirection direction) {
+  std::size_t offset = get_offset(pos);
+  direction_map_->buffer()[offset] = (unsigned char)direction;
+}
+
+inline void EdgeDrawing::set_edge(Position pos, bool value) {
   std::size_t offset = get_offset(pos);
   if (value == true) {
     edge_map_->buffer()[offset] = 1;
@@ -239,7 +249,7 @@ void EdgeDrawing::set_edge(Position pos, bool value) {
   }
 }
 
-bool EdgeDrawing::is_edge(Position pos) {
+inline bool EdgeDrawing::is_edge(Position pos) {
   std::size_t offset = get_offset(pos);
   if (edge_map_->buffer()[offset] == 1) {
     return true;
@@ -252,7 +262,7 @@ inline std::size_t EdgeDrawing::get_offset(Position pos) {
   return width_ * pos.y + pos.x;
 }
 
-bool EdgeDrawing::isValidPosition(Position pos) {
+inline bool EdgeDrawing::isValidPosition(Position pos) {
   if (pos.x < 0 || pos.x >= width_ || pos.y < 0 || pos.y >= height_) {
     return false;
   } else {

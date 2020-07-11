@@ -32,6 +32,7 @@ class EdgeDrawing {
 
   float magnitudeAt(Position pos);
   EdgeDirection directionAt(Position pos);
+  void set_direction(Position pos, EdgeDirection direction);
 
   void set_edge(Position pos, bool value);
   bool is_edge(Position pos);
