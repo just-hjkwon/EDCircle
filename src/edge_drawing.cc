@@ -116,7 +116,7 @@ void EdgeDrawing::ConnectingAnchors() {
     }
 
     set_edge(anchor, true);
-    edge_segment.push_back(anchor);
+    edge_segment.push_back(std::make_pair(anchor, magnitudeAt(anchor)));
     bool push_back = true;
 
     EdgeDirection direction = directionAt(anchor);
@@ -160,9 +160,9 @@ void EdgeDrawing::ConnectingAnchors() {
         set_edge(next_position, true);
 
         if (push_back == true) {
-          edge_segment.push_back(next_position);
+          edge_segment.push_back(std::make_pair(next_position, magnitude));
         } else {
-          edge_segment.push_front(next_position);
+          edge_segment.push_front(std::make_pair(next_position, magnitude));
         }
 
         EdgeDirection next_direction = directionAt(next_position);
