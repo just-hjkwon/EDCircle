@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
   EdgeDrawing edge_drawing(36.0f, 8.0f, 1);
   edge_drawing.DetectEdge(image);
 
-  cv::imshow("image", input_image);
-  cv::imshow("filtered", filtered);
+  EDLine ed_line;
+  ed_line.DetectLine(image);
 
   EdgeDrawing edge_drawing(image, 36.0f, 8.0f, 1);
 
