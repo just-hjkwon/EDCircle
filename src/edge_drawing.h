@@ -17,14 +17,27 @@ class EdgeDrawing {
     HorizontalEdge = 1
   };
 
+  enum class ConnectingAim : unsigned char {
+    Left = 0,
+    Up = 1,
+    Right = 2,
+    Down = 3
+  };
+
  private:
   void PrepareEdgeMap(GrayImage& image);
   void ExtractAnchor();
   void ConnectingAnchors();
-  void DoSmartRouteToLeft(Position start_position);
-  void DoSmartRouteToRight(Position start_position);
-  void DoSmartRouteToUp(Position start_position);
-  void DoSmartRouteToDown(Position start_position);
+  Position FindNextConnectingPosition(Position current, ConnectingAim direction);
+
+  float magnitudeAt(Position pos);
+  EdgeDirection directionAt(Position pos);
+
+  void set_edge(Position pos, bool value);
+  bool is_edge(Position pos);
+
+  std::size_t get_offset(Position pos);
+  bool isValidPosition(Position pos);
 
  private:
   std::size_t width_;

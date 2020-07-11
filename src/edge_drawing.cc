@@ -1,6 +1,5 @@
 #include "edge_drawing.h"
 
-
 #include "image/filters.h"
 
 EdgeDrawing::EdgeDrawing(GrayImage& image, float magnitude_threshold,
@@ -26,17 +25,12 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
   std::size_t width = image.width();
   std::size_t height = image.height();
 
-  x_gradient_ =
-      std::make_shared<FloatImage>(width, height, x_gradient.buffer());
-  y_gradient_ =
-      std::make_shared<FloatImage>(width, height, y_gradient.buffer());
-
   std::vector<float> magnitude(width * height);
   std::vector<unsigned char> direction(width * height);
 
   for (auto y = 0; y < height; ++y) {
-    auto x_ptr = x_gradient_->buffer() + (width * y);
-    auto y_ptr = y_gradient_->buffer() + (width * y);
+    auto x_ptr = x_gradient.buffer() + (width * y);
+    auto y_ptr = y_gradient.buffer() + (width * y);
 
     auto magnitude_ptr = magnitude.data() + (width * y);
     auto direction_ptr = direction.data() + (width * y);
@@ -86,8 +80,8 @@ void EdgeDrawing::ExtractAnchor() {
         neighbor1 = magnitude_ptr[x + 1];
       }
 
-      if (magnitude - neighbor0 > anchor_threshold_ &&
-          magnitude - neighbor1 > anchor_threshold_) {
+      if (magnitude - neighbor0 >= anchor_threshold_ &&
+          magnitude - neighbor1 >= anchor_threshold_) {
         anchors_.push_back(Position(x, y));
       }
     }
@@ -104,236 +98,164 @@ void EdgeDrawing::ConnectingAnchors() {
   auto magnitude_ptr = magnitude_->buffer();
 
   for (auto& anchor : anchors_) {
-    if ((EdgeDirection)direction_map_ptr[anchor.y * width_ + anchor.x] ==
-        EdgeDirection::HorizontalEdge) {
-      DoSmartRouteToLeft(anchor);
-      DoSmartRouteToRight(anchor);
+    if (is_edge(anchor) == true) {
+      continue;
+    }
+
+    set_edge(anchor, true);
+
+    EdgeDirection direction = directionAt(anchor);
+
+    ConnectingAim aims[2];
+
+    if (direction == EdgeDirection::HorizontalEdge) {
+      aims[0] = ConnectingAim::Left;
+      aims[1] = ConnectingAim::Right;
     } else {
-      DoSmartRouteToUp(anchor);
-      DoSmartRouteToDown(anchor);
+      aims[0] = ConnectingAim::Up;
+      aims[1] = ConnectingAim::Down;
+    }
+
+    for (const auto aim : aims) {
+      Position current_position(anchor.x, anchor.y);
+      ConnectingAim currenct_aim = aim;
+      EdgeDirection current_direction = direction;
+
+      Position next_position =
+          FindNextConnectingPosition(current_position, currenct_aim);
+
+      while (true) {
+        if (isValidPosition(next_position) == false) {
+          break;
+        }
+
+        float magnitude = magnitudeAt(next_position);
+        bool edge = is_edge(next_position);
+
+        if (magnitude == 0.0f || edge == true) {
+          break;
+        }
+
+        set_edge(next_position, true);
+
+        EdgeDirection next_direction = directionAt(next_position);
+
+        if (current_direction != next_direction) {
+          if (next_direction == EdgeDirection::VerticalEdge) {
+            if (next_position.y > current_position.y) {
+              currenct_aim = ConnectingAim::Down;
+            } else {
+              currenct_aim = ConnectingAim::Up;
+            }
+          } else if (next_direction == EdgeDirection::HorizontalEdge) {
+            if (next_position.x > current_position.x) {
+              currenct_aim = ConnectingAim::Right;
+            } else {
+              currenct_aim = ConnectingAim::Left;
+            }
+          } else {
+            throw std::runtime_error("Something wrong..");
+          }
+        }
+
+        current_position = next_position;
+        current_direction = next_direction;
+        next_position =
+            FindNextConnectingPosition(current_position, currenct_aim);
+      }
     }
   }
 }
 
-void EdgeDrawing::DoSmartRouteToLeft(Position start_position) {
-  auto direction_map_ptr = direction_map_->buffer();
-  auto magnitude_ptr = magnitude_->buffer();
-  auto edge_map_ptr = edge_map_->buffer();
+Position EdgeDrawing::FindNextConnectingPosition(Position pos,
+                                                 ConnectingAim direction) {
+  float neighbor_magnitudes[3] = {0.0f, 0.0f, 0.0f};
+  Position neighbor_positions[3] = {pos, pos, pos};
 
-  Position current_position = start_position;
-
-  int offset = width_ * current_position.y + current_position.x;
-
-  float magnitude = magnitude_ptr[offset];
-  unsigned char is_edge = edge_map_ptr[offset];
-  EdgeDirection direction = (EdgeDirection)direction_map_ptr[offset];
-
-  while (magnitude > 0.0f && is_edge == 0 &&
-         direction == EdgeDirection::HorizontalEdge) {
-    edge_map_ptr[offset] = 1;
-
-    float neighbor0 = 0.0f;
-    float neighbor1 = 0.0f;
-    float neighbor2 = 0.0f;
-
-    if (current_position.x >= 1 && current_position.y >= 1) {
-      neighbor0 = magnitude_ptr[offset - width_ - 1];
-    }
-    if (current_position.x >= 1) {
-      neighbor1 = magnitude_ptr[offset - 1];
-    }
-    if (current_position.x >= 1 && current_position.y <= int(height_ - 1)) {
-      neighbor2 = magnitude_ptr[offset + width_ - 1];
-    }
-
-    if (neighbor0 > neighbor1 && neighbor0 > neighbor2) {
-      current_position.x -= 1;
-      current_position.y -= 1;
-    } else if (neighbor2 > neighbor0 && neighbor2 > neighbor1) {
-      current_position.x -= 1;
-      current_position.y += 1;
-    } else {
-      current_position.x -= 1;
-    }
-
-    offset = width_ * current_position.y + current_position.x;
-
-    magnitude = magnitude_ptr[offset];
-    is_edge = edge_map_ptr[offset];
-    direction = (EdgeDirection)direction_map_ptr[offset];
-  }
-
-  if (direction == EdgeDirection::VerticalEdge) {
-    DoSmartRouteToUp(current_position);
-    DoSmartRouteToDown(current_position);
-  }
-}
-
-void EdgeDrawing::DoSmartRouteToRight(Position start_position) {
-  auto direction_map_ptr = direction_map_->buffer();
-  auto magnitude_ptr = magnitude_->buffer();
-  auto edge_map_ptr = edge_map_->buffer();
-
-  Position current_position = start_position;
-
-  int offset = width_ * current_position.y + current_position.x;
-
-  float magnitude = magnitude_ptr[offset];
-  unsigned char is_edge = edge_map_ptr[offset];
-  EdgeDirection direction = (EdgeDirection)direction_map_ptr[offset];
-
-  while (magnitude > 0.0f && is_edge == 0 &&
-         direction == EdgeDirection::HorizontalEdge) {
-    edge_map_ptr[offset] = 1;
-
-    float neighbor0 = 0.0f;
-    float neighbor1 = 0.0f;
-    float neighbor2 = 0.0f;
-
-    if (current_position.x < int(width_ - 1) && current_position.y >= 1) {
-      neighbor0 = magnitude_ptr[offset - width_ + 1];
-    }
-    if (current_position.x < int(width_ - 1)) {
-      neighbor1 = magnitude_ptr[offset + 1];
-    }
-    if (current_position.x < int(width_ - 1) &&
-        current_position.y <= int(height_ - 1)) {
-      neighbor2 = magnitude_ptr[offset + width_ + 1];
-    }
-
-    if (neighbor0 > neighbor1 && neighbor0 > neighbor2) {
-      current_position.x += 1;
-      current_position.y -= 1;
-    } else if (neighbor2 > neighbor0 && neighbor2 > neighbor1) {
-      current_position.x += 1;
-      current_position.y += 1;
-    } else {
-      current_position.x += 1;
-    }
-
-    offset = width_ * current_position.y + current_position.x;
-
-    magnitude = magnitude_ptr[offset];
-    is_edge = edge_map_ptr[offset];
-    direction = (EdgeDirection)direction_map_ptr[offset];
-  }
-
-  if (direction == EdgeDirection::VerticalEdge) {
-    DoSmartRouteToUp(current_position);
-    DoSmartRouteToDown(current_position);
-  }
-}
-
-void EdgeDrawing::DoSmartRouteToUp(Position start_position) {
-  auto direction_map_ptr = direction_map_->buffer();
-  auto magnitude_ptr = magnitude_->buffer();
-  auto edge_map_ptr = edge_map_->buffer();
-
-  Position current_position = start_position;
-
-  int offset = width_ * current_position.y + current_position.x;
-
-  float magnitude = magnitude_ptr[offset];
-  unsigned char is_edge = edge_map_ptr[offset];
-  EdgeDirection direction = (EdgeDirection)direction_map_ptr[offset];
-
-  while (magnitude > 0.0f && is_edge == 0 &&
-         direction == EdgeDirection::VerticalEdge) {
-    edge_map_ptr[offset] = 1;
-
-    float neighbor0 = 0.0f;
-    float neighbor1 = 0.0f;
-    float neighbor2 = 0.0f;
-
-    if (current_position.x >= 1 && current_position.y >= 1) {
-      neighbor0 = magnitude_ptr[offset - width_ - 1];
-    }
-    if (current_position.y >= 1) {
-      neighbor1 = magnitude_ptr[offset - width_];
-    }
-    if (current_position.x < int(width_ - 1) && current_position.y >= 1) {
-      neighbor2 = magnitude_ptr[offset - width_ + 1];
-    }
-
-    if (neighbor0 > neighbor1 && neighbor0 > neighbor2) {
-      current_position.x -= 1;
-      current_position.y -= 1;
-    } else if (neighbor2 > neighbor0 && neighbor2 > neighbor1) {
-      current_position.x += 1;
-      current_position.y -= 1;
-    } else {
-      current_position.y -= 1;
-    }
-
-    if (current_position.x < 0 || current_position.x >= width_ ||
-        current_position.y < 0 || current_position.y >= height_) {
+  switch (direction) {
+    case ConnectingAim::Left:
+      neighbor_positions[0].x -= 1;
+      neighbor_positions[0].y -= 1;
+      neighbor_positions[1].x -= 1;
+      neighbor_positions[2].x -= 1;
+      neighbor_positions[2].y += 1;
       break;
-    }
-
-    offset = width_ * current_position.y + current_position.x;
-
-    magnitude = magnitude_ptr[offset];
-    is_edge = edge_map_ptr[offset];
-    direction = (EdgeDirection)direction_map_ptr[offset];
+    case ConnectingAim::Right:
+      neighbor_positions[0].x += 1;
+      neighbor_positions[0].y -= 1;
+      neighbor_positions[1].x += 1;
+      neighbor_positions[2].x += 1;
+      neighbor_positions[2].y += 1;
+      break;
+    case ConnectingAim::Up:
+      neighbor_positions[0].x -= 1;
+      neighbor_positions[0].y -= 1;
+      neighbor_positions[1].y -= 1;
+      neighbor_positions[2].x += 1;
+      neighbor_positions[2].y -= 1;
+      break;
+    case ConnectingAim::Down:
+      neighbor_positions[0].x -= 1;
+      neighbor_positions[0].y += 1;
+      neighbor_positions[1].y += 1;
+      neighbor_positions[2].x += 1;
+      neighbor_positions[2].y += 1;
+      break;
   }
 
-  if (direction == EdgeDirection::HorizontalEdge) {
-    DoSmartRouteToLeft(current_position);
-    DoSmartRouteToRight(current_position);
+  for (int i = 0; i < 3; ++i) {
+    if (isValidPosition(neighbor_positions[i]) == true) {
+      neighbor_magnitudes[i] = magnitudeAt(neighbor_positions[i]);
+    }
+  }
+
+  if (neighbor_magnitudes[0] > neighbor_magnitudes[1] &&
+      neighbor_magnitudes[0] > neighbor_magnitudes[2]) {
+    return neighbor_positions[0];
+  } else if (neighbor_magnitudes[2] > neighbor_magnitudes[0] &&
+             neighbor_magnitudes[2] > neighbor_magnitudes[1]) {
+    return neighbor_positions[2];
+  } else {
+    return neighbor_positions[1];
   }
 }
 
-void EdgeDrawing::DoSmartRouteToDown(Position start_position) {
-  auto direction_map_ptr = direction_map_->buffer();
-  auto magnitude_ptr = magnitude_->buffer();
-  auto edge_map_ptr = edge_map_->buffer();
+inline float EdgeDrawing::magnitudeAt(Position pos) {
+  std::size_t offset = get_offset(pos);
+  return magnitude_->buffer()[offset];
+}
 
-  Position current_position = start_position;
+EdgeDrawing::EdgeDirection EdgeDrawing::directionAt(Position pos) {
+  std::size_t offset = get_offset(pos);
+  return (EdgeDirection)(direction_map_->buffer()[offset]);
+}
 
-  int offset = width_ * current_position.y + current_position.x;
-
-  float magnitude = magnitude_ptr[offset];
-  unsigned char is_edge = edge_map_ptr[offset];
-  EdgeDirection direction = (EdgeDirection)direction_map_ptr[offset];
-
-  while (magnitude > 0.0f && is_edge == 0 &&
-         direction == EdgeDirection::VerticalEdge) {
-    edge_map_ptr[offset] = 1;
-
-    float neighbor0 = 0.0f;
-    float neighbor1 = 0.0f;
-    float neighbor2 = 0.0f;
-
-    if (current_position.x >= 1 && current_position.y < int(height_ - 1)) {
-      neighbor0 = magnitude_ptr[offset + width_ - 1];
-    }
-    if (current_position.y < int(height_ - 1)) {
-      neighbor1 = magnitude_ptr[offset + width_];
-    }
-    if (current_position.x < int(width_ - 1) &&
-        current_position.y < int(height_ - 1)) {
-      neighbor2 = magnitude_ptr[offset + width_ + 1];
-    }
-
-    if (neighbor0 > neighbor1 && neighbor0 > neighbor2) {
-      current_position.x -= 1;
-      current_position.y += 1;
-    } else if (neighbor2 > neighbor0 && neighbor2 > neighbor1) {
-      current_position.x += 1;
-      current_position.y += 1;
-    } else {
-      current_position.y += 1;
-    }
-
-    offset = width_ * current_position.y + current_position.x;
-
-    magnitude = magnitude_ptr[offset];
-    is_edge = edge_map_ptr[offset];
-    direction = (EdgeDirection)direction_map_ptr[offset];
+void EdgeDrawing::set_edge(Position pos, bool value) {
+  std::size_t offset = get_offset(pos);
+  if (value == true) {
+    edge_map_->buffer()[offset] = 1;
+  } else {
+    edge_map_->buffer()[offset] = 0;
   }
+}
 
-  if (direction == EdgeDirection::HorizontalEdge) {
-    DoSmartRouteToLeft(current_position);
-    DoSmartRouteToRight(current_position);
+bool EdgeDrawing::is_edge(Position pos) {
+  std::size_t offset = get_offset(pos);
+  if (edge_map_->buffer()[offset] == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+inline std::size_t EdgeDrawing::get_offset(Position pos) {
+  return width_ * pos.y + pos.x;
+}
+
+bool EdgeDrawing::isValidPosition(Position pos) {
+  if (pos.x < 0 || pos.x >= width_ || pos.y < 0 || pos.y >= height_) {
+    return false;
+  } else {
+    return true;
   }
 }
