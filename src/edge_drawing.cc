@@ -2,11 +2,15 @@
 
 #include "image/filters.h"
 
-EdgeDrawing::EdgeDrawing(GrayImage& image, float magnitude_threshold,
-                         float anchor_threshold, int anchor_extraction_interval)
+EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
+                         int anchor_extraction_interval)
     : magnitude_threshold_(magnitude_threshold),
       anchor_threshold_(anchor_threshold),
       anchor_extraction_interval_(anchor_extraction_interval) {
+
+}
+
+void EdgeDrawing::DetectEdge(GrayImage& image) {
   width_ = image.width();
   height_ = image.height();
 
@@ -155,7 +159,7 @@ void EdgeDrawing::ConnectingAnchors() {
         } else {
           edge_segment.push_front(next_position);
         }
-        
+
         if (magnitude == 0.0f || edge == true) {
           break;
         }
@@ -253,7 +257,7 @@ inline float EdgeDrawing::magnitudeAt(Position pos) {
   return magnitude_->buffer()[offset];
 }
 
-inline EdgeDrawing::EdgeDirection EdgeDrawing::directionAt(Position pos) {
+inline EdgeDirection EdgeDrawing::directionAt(Position pos) {
   std::size_t offset = get_offset(pos);
   return (EdgeDirection)(direction_map_->buffer()[offset]);
 }

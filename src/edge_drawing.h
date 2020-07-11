@@ -6,29 +6,32 @@
 #include "image/float_image.h"
 #include "image/gray_image.h"
 
+enum class EdgeDirection : unsigned char {
+  VerticalEdge = 0,
+  HorizontalEdge = 1
+};
+
+enum class ConnectingAim : unsigned char {
+  Left = 0,
+  Up = 1,
+  Right = 2,
+  Down = 3
+};
+
 class EdgeDrawing {
  public:
-  EdgeDrawing(GrayImage& image, float magnitude_threshold,
-              float anchor_threshold, int anchor_extraction_interval);
+  EdgeDrawing(float magnitude_threshold, float anchor_threshold,
+              int anchor_extraction_interval);
 
  public:
-  enum class EdgeDirection : unsigned char {
-    VerticalEdge = 0,
-    HorizontalEdge = 1
-  };
-
-  enum class ConnectingAim : unsigned char {
-    Left = 0,
-    Up = 1,
-    Right = 2,
-    Down = 3
-  };
+  void DetectEdge(GrayImage& image);
 
  private:
   void PrepareEdgeMap(GrayImage& image);
   void ExtractAnchor();
   void ConnectingAnchors();
-  Position FindNextConnectingPosition(Position current, ConnectingAim direction);
+  Position FindNextConnectingPosition(Position current,
+                                      ConnectingAim direction);
 
   float magnitudeAt(Position pos);
   EdgeDirection directionAt(Position pos);
