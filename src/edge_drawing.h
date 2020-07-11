@@ -6,29 +6,32 @@
 #include "image/float_image.h"
 #include "image/gray_image.h"
 
+enum class EdgeDirection : unsigned char {
+  VerticalEdge = 0,
+  HorizontalEdge = 1
+};
+
+enum class ConnectingAim : unsigned char {
+  Left = 0,
+  Up = 1,
+  Right = 2,
+  Down = 3
+};
+
 class EdgeDrawing {
  public:
-  EdgeDrawing(GrayImage& image, float magnitude_threshold,
-              float anchor_threshold, int anchor_extraction_interval);
+  EdgeDrawing(float magnitude_threshold, float anchor_threshold,
+              int anchor_extraction_interval);
 
  public:
-  enum class EdgeDirection : unsigned char {
-    VerticalEdge = 0,
-    HorizontalEdge = 1
-  };
+  void DetectEdge(GrayImage& image);
 
-  enum class ConnectingAim : unsigned char {
-    Left = 0,
-    Up = 1,
-    Right = 2,
-    Down = 3
-  };
-
- private:
+ protected:
   void PrepareEdgeMap(GrayImage& image);
   void ExtractAnchor();
   void ConnectingAnchors();
-  Position FindNextConnectingPosition(Position current, ConnectingAim direction);
+  Position FindNextConnectingPosition(Position current,
+                                      ConnectingAim direction);
 
   float magnitudeAt(Position pos);
   EdgeDirection directionAt(Position pos);
@@ -40,7 +43,7 @@ class EdgeDrawing {
   std::size_t get_offset(Position pos);
   bool isValidPosition(Position pos);
 
- private:
+ protected:
   std::size_t width_;
   std::size_t height_;
 
@@ -48,7 +51,7 @@ class EdgeDrawing {
   float anchor_threshold_;
   int anchor_extraction_interval_;
 
- private:
+ protected:
   std::shared_ptr<FloatImage> x_gradient_;
   std::shared_ptr<FloatImage> y_gradient_;
   std::shared_ptr<FloatImage> magnitude_;

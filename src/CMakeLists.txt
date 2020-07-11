@@ -43,6 +43,8 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/types.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/edge_drawing.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/edge_drawing.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/EDPF.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/EDPF.h"	
     "${CMAKE_CURRENT_SOURCE_DIR}/image/image.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/gray_image.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/gray_image.h"

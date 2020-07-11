@@ -2,11 +2,15 @@
 
 #include "image/filters.h"
 
-EdgeDrawing::EdgeDrawing(GrayImage& image, float magnitude_threshold,
-                         float anchor_threshold, int anchor_extraction_interval)
+EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
+                         int anchor_extraction_interval)
     : magnitude_threshold_(magnitude_threshold),
       anchor_threshold_(anchor_threshold),
       anchor_extraction_interval_(anchor_extraction_interval) {
+
+}
+
+void EdgeDrawing::DetectEdge(GrayImage& image) {
   width_ = image.width();
   height_ = image.height();
 
@@ -39,7 +43,7 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
 
     for (auto x = 0; x < width; ++x) {
       float magnitude = sqrt((x_ptr[x] * x_ptr[x]) + (y_ptr[x] * y_ptr[x]));
-      if (magnitude >= magnitude_threshold_) {
+      if (magnitude > magnitude_threshold_) {
         magnitude_ptr[x] = magnitude;
       } else {
         magnitude_ptr[x] = 0.0f;
@@ -100,7 +104,6 @@ void EdgeDrawing::ConnectingAnchors() {
                                                      edge_map_buffer.data());
 
   auto direction_map_ptr = direction_map_->buffer();
-  auto magnitude_ptr = magnitude_->buffer();
 
   edge_segments_.clear();
   edge_segments_.reserve(anchors_.size());
@@ -113,7 +116,7 @@ void EdgeDrawing::ConnectingAnchors() {
     }
 
     set_edge(anchor, true);
-    edge_segment.push_back(anchor);
+    edge_segment.push_back(std::make_pair(anchor, magnitudeAt(anchor)));
     bool push_back = true;
 
     EdgeDirection direction = directionAt(anchor);
@@ -150,17 +153,17 @@ void EdgeDrawing::ConnectingAnchors() {
         float magnitude = magnitudeAt(next_position);
         bool edge = is_edge(next_position);
 
-        if (push_back == true) {
-          edge_segment.push_back(next_position);
-        } else {
-          edge_segment.push_front(next_position);
-        }
-        
         if (magnitude == 0.0f || edge == true) {
           break;
         }
 
         set_edge(next_position, true);
+
+        if (push_back == true) {
+          edge_segment.push_back(std::make_pair(next_position, magnitude));
+        } else {
+          edge_segment.push_front(std::make_pair(next_position, magnitude));
+        }
 
         EdgeDirection next_direction = directionAt(next_position);
 
@@ -253,7 +256,7 @@ inline float EdgeDrawing::magnitudeAt(Position pos) {
   return magnitude_->buffer()[offset];
 }
 
-inline EdgeDrawing::EdgeDirection EdgeDrawing::directionAt(Position pos) {
+inline EdgeDirection EdgeDrawing::directionAt(Position pos) {
   std::size_t offset = get_offset(pos);
   return (EdgeDirection)(direction_map_->buffer()[offset]);
 }
