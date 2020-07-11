@@ -1,6 +1,9 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+#include <list>
+
+
 template <typename T>
 class Position_ {
  public:
@@ -22,6 +25,10 @@ class PositionF : public Position_<float> {
 class Position : public Position_<int> {
  public:
   Position(int x, int y) : Position_<int>(x, y){};
+};
+
+class EdgeSegment : public std::list<Position> {
+
 };
 
 #endif

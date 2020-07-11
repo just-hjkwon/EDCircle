@@ -102,12 +102,19 @@ void EdgeDrawing::ConnectingAnchors() {
   auto direction_map_ptr = direction_map_->buffer();
   auto magnitude_ptr = magnitude_->buffer();
 
+  edge_segments_.clear();
+  edge_segments_.reserve(anchors_.size());
+
   for (auto& anchor : anchors_) {
+    EdgeSegment edge_segment;
+
     if (is_edge(anchor) == true) {
       continue;
     }
 
     set_edge(anchor, true);
+    edge_segment.push_back(anchor);
+    bool push_back = true;
 
     EdgeDirection direction = directionAt(anchor);
 
@@ -122,6 +129,12 @@ void EdgeDrawing::ConnectingAnchors() {
     }
 
     for (const auto aim : aims) {
+      if (aim == aims[0]) {
+        push_back = true;
+      } else {
+        push_back = false;
+      }
+
       Position current_position(anchor.x, anchor.y);
       ConnectingAim currenct_aim = aim;
       EdgeDirection current_direction = direction;
@@ -137,6 +150,12 @@ void EdgeDrawing::ConnectingAnchors() {
         float magnitude = magnitudeAt(next_position);
         bool edge = is_edge(next_position);
 
+        if (push_back == true) {
+          edge_segment.push_back(next_position);
+        } else {
+          edge_segment.push_front(next_position);
+        }
+        
         if (magnitude == 0.0f || edge == true) {
           break;
         }
@@ -169,7 +188,11 @@ void EdgeDrawing::ConnectingAnchors() {
             FindNextConnectingPosition(current_position, currenct_aim);
       }
     }
+
+    edge_segments_.push_back(edge_segment);
   }
+
+  edge_segments_.shrink_to_fit();
 }
 
 Position EdgeDrawing::FindNextConnectingPosition(Position pos,
