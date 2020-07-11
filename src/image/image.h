@@ -17,6 +17,7 @@ class Image {
  public:
   std::size_t width() { return width_; };
   std::size_t height() { return height_; };
+  T* buffer() { return buffer_.data(); };
 
  protected:
   std::size_t width_;

@@ -13,6 +13,9 @@ class GrayImage : public Image<unsigned char> {
       : Image<unsigned char>(width, height, buffer){};
 
   void ApplyFilter(Filter &filter);
+  GrayImage MakeGrayFilteredImage(Filter& filter);
+  FloatImage MakeFloatFilteredImage(Filter& filter);
+
   cv::Mat toMat();
 
   static GrayImage FromMat(cv::Mat &cv_image);
