@@ -16,6 +16,7 @@ class EDCircle : public EDLine {
 
  protected:
   float circle_fitting_error_threshold_;
+  float ellipse_fitting_error_threshold_;
 };
 
 #endif
