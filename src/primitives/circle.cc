@@ -56,10 +56,13 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float error = 0.0f;
 
   for (auto e : edge_segment) {
-    error += sqrt(((e.first.x - center_x) * (e.first.x - center_x)) +
-                  ((e.first.y - center_y) * (e.first.y - center_y))) -
-             radius;
+    float x = float(e.first.x);
+    float y = float(e.first.y);
+    error += abs(sqrt(((x - center_x) * (x - center_x)) +
+                      ((y - center_y) * (y - center_y))) -
+                 radius);
   }
+  error /= float(edge_segment.size());
 
   return Circle(center_x, center_y, radius, error);
 }
