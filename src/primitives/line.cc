@@ -1,5 +1,7 @@
 #include "line.h"
 
+#include <algorithm>
+
 Line::Line(float a, float b, float fitting_error, bool is_parameter_of_x,
            EdgeSegment edge_segment) {
   parameters_[0] = a;
@@ -9,6 +11,41 @@ Line::Line(float a, float b, float fitting_error, bool is_parameter_of_x,
 
   is_parameter_of_x_ = is_parameter_of_x;
   edge_segment_ = edge_segment;
+
+  range[0] = INT_MAX;
+  range[1] = -INT_MAX;
+
+  if (is_parameter_of_x_ == true) {
+    for (auto edge : edge_segment) {
+      range[0] = std::min(range[0], edge.first.x);
+      range[1] = std::max(range[1], edge.first.x);
+    }
+  } else {
+    for (auto edge : edge_segment) {
+      range[0] = std::min(range[0], edge.first.y);
+      range[1] = std::max(range[1], edge.first.y);
+    }
+  }
+}
+
+Position Line::begin() const {
+  return edge_segment_.front().first;
+}
+
+Position Line::end() const {
+  return edge_segment_.back().first;
+}
+
+Position Line::vector() const {
+  return Position(edge_segment_.back().first.x - edge_segment_.front().first.x,
+                  edge_segment_.back().first.y - edge_segment_.front().first.y);
+}
+
+float Line::get_length() const {
+  Position b = begin();
+  Position e = end();
+
+  return sqrt((e.x - b.x) * (e.x - b.x) + (e.y - b.y) * (e.y - b.y));
 }
 
 float Line::ComputeError(const EdgeSegment& edge_segment) {

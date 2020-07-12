@@ -1,4 +1,3 @@
 #include "arc.h"
 
-//Arc::Arc(EdgeSegment edge_segment) {}
-
+Arc::Arc(std::vector<Line> lines) { lines_ = lines; }
