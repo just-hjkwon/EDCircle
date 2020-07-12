@@ -80,10 +80,10 @@ std::vector<std::vector<Line>> EDCircle::ExtractArcCandidates(
     return arc_candidates;
   }
 
-  lengths.push_back(lines[0].get_length());
+  lengths.push_back(lines[0].length());
 
   for (auto i = 1; i < lines.size(); ++i) {
-    lengths.push_back(lines[i].get_length());
+    lengths.push_back(lines[i].length());
 
     Position prev_vector = lines[i - 1].vector();
     Position cur_vector = lines[i].vector();

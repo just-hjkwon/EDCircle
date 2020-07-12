@@ -14,7 +14,7 @@ class Line {
   Position end() const;
   Position vector() const;
 
-  float get_length() const;
+  float length() const;
 
   float ComputeError(const EdgeSegment& edge_segment);
   float ComputeError(const Position& pos);
@@ -33,6 +33,7 @@ class Line {
   float parameters_[2] = {0.0f, 0.0f};
   float fitting_error_ = 0.0f;
   bool is_parameter_of_x_ = false;
+  float length_ = 0.0f;
 
   int range[2] = {0, 0};
 };

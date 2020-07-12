@@ -27,6 +27,11 @@ Line::Line(float a, float b, float fitting_error, bool is_parameter_of_x,
       range[1] = std::max(range[1], edge.first.y);
     }
   }
+
+  Position p0 = begin();
+  Position p1 = end();
+
+  length_ = sqrt((p1.x - p0.x) * (p1.x - p0.x) + (p1.y - p0.y) * (p1.y - p0.y));
 }
 
 Position Line::begin() const { return edge_segment_.front().first; }
@@ -38,12 +43,7 @@ Position Line::vector() const {
                   edge_segment_.back().first.y - edge_segment_.front().first.y);
 }
 
-float Line::get_length() const {
-  Position b = begin();
-  Position e = end();
-
-  return sqrt((e.x - b.x) * (e.x - b.x) + (e.y - b.y) * (e.y - b.y));
-}
+float Line::length() const { return length_; }
 
 float Line::ComputeError(const EdgeSegment& edge_segment) {
   float error = 0.0f;

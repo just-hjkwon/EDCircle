@@ -1,3 +1,17 @@
 #include "arc.h"
 
-Arc::Arc(std::vector<Line> lines) { lines_ = lines; }
+Arc::Arc(const std::vector<Line>& lines)
+    : lines_(lines), fitted_circle_(Circle::FitFromEdgeSegment(lines)) {
+  length_ = 0.0f;
+  for (const auto& line : lines_) {
+    length_ += line.length();
+  }
+}
+
+Arc::Arc(const std::vector<Line>& lines, const Circle& fitted_circle)
+    : lines_(lines), fitted_circle_(fitted_circle) {
+  length_ = 0.0f;
+  for (const auto& line : lines_) {
+    length_ += line.length();
+  }
+}
