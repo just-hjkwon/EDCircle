@@ -15,3 +15,7 @@ Arc::Arc(const std::vector<Line>& lines, const Circle& fitted_circle)
     length_ += line.length();
   }
 }
+
+Circle Arc::fitted_circle() const { return fitted_circle_; }
+
+float Arc::length() const { return length_; }

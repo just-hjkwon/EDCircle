@@ -12,6 +12,10 @@ class Arc {
   Arc(const std::vector<Line> &lines);
   Arc(const std::vector<Line> &lines, const Circle &fitted_circle);
 
+ public:
+  Circle fitted_circle() const;
+  float length() const;
+
  protected:
   Circle fitted_circle_;
   std::vector<Line> lines_;

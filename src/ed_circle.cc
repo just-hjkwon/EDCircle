@@ -164,7 +164,7 @@ void EDCircle::ExtractArcs() {
     for (const auto& candidate : arc_candidates) {
       Circle circle = Circle::FitFromEdgeSegment(candidate);
 
-       if (circle.fitting_error() <= 1.5f) {
+      if (circle.fitting_error() <= 1.5f) {
         Arc arc(candidate);
         arcs_.push_back(arc);
         continue;
@@ -200,7 +200,7 @@ void EDCircle::ExtractArcs() {
 
             Arc arc(new_arc_lines);
             arcs_.push_back(arc);
-          }
+          }%
 
           break;
         }
@@ -209,4 +209,7 @@ void EDCircle::ExtractArcs() {
       }
     }
   }
+
+  std::sort(arcs_.begin(), arcs_.end(),
+            [](const Arc& a, const Arc& b) { return a.length() > b.length(); });
 }
