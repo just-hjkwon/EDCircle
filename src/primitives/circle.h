@@ -1,7 +1,7 @@
-#ifndef CIRCLE_H_
-#define CIRCLE_H_
+#ifndef PRIMITIVES__CIRCLE_H_
+#define PRIMITIVES__CIRCLE_H_
 
-#include "types.h"
+#include "../types.h"
 
 class Circle {
  public:

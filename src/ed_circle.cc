@@ -1,6 +1,7 @@
 #include "ed_circle.h"
 
-#include "circle.h"
+#include "primitives/circle.h"
+#include "primitives/ellipse.h"
 
 EDCircle::EDCircle() { circle_fitting_error_threshold_ = 1.5f; }
 
@@ -12,10 +13,15 @@ void EDCircle::DetectCircle(GrayImage& image) {
   cv::Mat c = cv::Mat::zeros(height_, width_, CV_8UC1);
   for (auto edge_segment : edge_segments_) {
     if (isClosedEdgeSegment(edge_segment) == true) {
+      Ellipse ellipse = Ellipse::FitFromEdgeSegment(edge_segment);
       Circle circle = Circle::FitFromEdgeSegment(edge_segment);
 
       if (circle.fitting_error() < circle_fitting_error_threshold_) {
         circles.push_back(circle);
+      }
+
+      else {
+      
       }
     }
   }
