@@ -20,6 +20,8 @@ class EDCircle : public EDLine {
   void ExtractArcs();
   std::vector<std::vector<Line>> ExtractArcCandidates(
       const std::vector<Line>& line_segments);
+  void ExtendArcsAndDetectCircle();
+  void ExtendArcsAndDetectEllipse();
 
  protected:
   std::vector<Circle> circles_;

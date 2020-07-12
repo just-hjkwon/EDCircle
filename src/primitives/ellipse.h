@@ -1,7 +1,11 @@
 #ifndef PRIMITIVES__ELLIPSE_H_
 #define PRIMITIVES__ELLIPSE_H_
 
+#include <opencv2/core.hpp>
+#include <vector>
+
 #include "../types.h"
+#include "line.h"
 
 class Ellipse {
  public:
@@ -10,9 +14,11 @@ class Ellipse {
 
  public:
   float fitting_error() { return fitting_error_; }
+  void Draw(cv::Mat &image, cv::Scalar color);
 
  public:
   static Ellipse FitFromEdgeSegment(const EdgeSegment &edge_segment);
+  static Ellipse FitFromEdgeSegment(const std::vector<Line> &lines);
 
  protected:
   float ComputeError(Position pos);

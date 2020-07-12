@@ -3,7 +3,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
 Ellipse::Ellipse(float a, float b, float c, float d, float e, float f,
@@ -30,6 +29,12 @@ Ellipse::Ellipse(float a, float b, float c, float d, float e, float f,
   axis_lengths_[1] = (-1.0f * sqrt(term0 * (term1 - term2))) / term4;
 }
 
+void Ellipse::Draw(cv::Mat& image, cv::Scalar color) {
+  cv::ellipse(image, cv::Point2f(cx_, cy_),
+              cv::Size(axis_lengths_[0], axis_lengths_[1]),
+              angle_ / M_PI * 180.0f, 0.0, 360.0, color);
+}
+
 Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   std::vector<cv::Point2f> points;
   for (const auto& e : edge_segment) {
@@ -50,12 +55,6 @@ Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
     major_length = rect.size.height / 2.0f;
     minor_length = rect.size.width / 2.0f;
     angle = (90.0f + rect.angle);
-  }
-
-  if (angle > 90.0f) {
-    angle = 180.0f - angle;
-  } else if (angle < -90.f) {
-    angle = 180.0f + angle;
   }
 
   angle = angle / 180.0f * M_PI;
@@ -81,7 +80,7 @@ Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float parameters[6] = {a, b, c, d, e, f};
 
   Ellipse ellipse(a, b, c, d, e, f, 0.0f);
-
+  
   float error = 0.0f;
 
   for (const auto& edge : edge_segment) {
@@ -94,17 +93,35 @@ Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   return ellipse;
 }
 
+Ellipse Ellipse::FitFromEdgeSegment(const std::vector<Line>& lines) {
+  EdgeSegment whole_edge_segment;
+
+  for (const auto& line : lines) {
+    EdgeSegment edge_segment = line.edge_segment();
+    whole_edge_segment.insert(whole_edge_segment.end(), edge_segment.begin(),
+                              edge_segment.end());
+  }
+
+  return FitFromEdgeSegment(whole_edge_segment);
+}
+
 float Ellipse::ComputeError(Position pos) {
   float x = float(pos.x);
   float y = float(pos.y);
 
-  float degree = atan2(y - cy_, x - cx_);
-  float ideal_x = cx_ + axis_lengths_[0] * cos(degree - angle_) * cos(angle_) -
-                  axis_lengths_[1] * sin(degree - angle_) * sin(angle_);
-  float ideal_y = cy_ + axis_lengths_[0] * cos(degree - angle_) * sin(angle_) +
-                  axis_lengths_[1] * sin(degree - angle_) * cos(angle_);
+  float degree = atan2(y - cy_, x - cx_) - angle_;
+
+  float new_aspect_x = cos(degree) / axis_lengths_[0];
+  float new_aspect_y = sin(degree) / axis_lengths_[1];
+  degree = atan2(new_aspect_y, new_aspect_x);
+
+  float ideal_x = cx_ + axis_lengths_[0] * cos(degree) * cos(angle_) -
+                  axis_lengths_[1] * sin(degree) * sin(angle_);
+  float ideal_y = cy_ + axis_lengths_[0] * cos(degree) * sin(angle_) +
+                  axis_lengths_[1] * sin(degree) * cos(angle_);
 
   float error =
       sqrt((ideal_x - x) * (ideal_x - x) + (ideal_y - y) * (ideal_y - y));
+
   return error;
 }
