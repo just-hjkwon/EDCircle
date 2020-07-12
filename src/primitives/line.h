@@ -2,6 +2,7 @@
 #define PRIMITIVES__LINE_H_
 
 #include "../types.h"
+#include <opencv2/core.hpp>
 
 class Line {
  public:
@@ -20,6 +21,8 @@ class Line {
   float fitting_error() { return fitting_error_; }
   float get_angle() const;
   EdgeSegment edge_segment() const;
+
+  void Draw(cv::Mat& image, cv::Scalar color) const;
 
  public:
   static Line FitFromEdgeSegment(const EdgeSegment& edge_segment);

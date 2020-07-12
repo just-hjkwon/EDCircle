@@ -1,8 +1,15 @@
 #include "circle.h"
 
+#include <opencv2/imgproc.hpp>
+
 Circle::Circle(float center_x, float center_y, float radius,
                float fitting_error)
     : parameters_{center_x, center_y, radius}, fitting_error_(fitting_error) {}
+
+void Circle::Draw(cv::Mat& image, cv::Scalar color) {
+  cv::circle(image, cv::Point(parameters_[0], parameters_[1]), parameters_[2],
+             color);
+}
 
 Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float mean_x = 0.0f;
@@ -65,4 +72,16 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   error /= float(edge_segment.size());
 
   return Circle(center_x, center_y, radius, error);
+}
+
+Circle Circle::FitFromEdgeSegment(const std::vector<Line>& lines) {
+  EdgeSegment whole_edge_segment;
+
+  for (const auto& line : lines) {
+    EdgeSegment edge_segment = line.edge_segment();
+    whole_edge_segment.insert(whole_edge_segment.end(), edge_segment.begin(),
+                              edge_segment.end());
+  }
+
+  return FitFromEdgeSegment(whole_edge_segment);
 }

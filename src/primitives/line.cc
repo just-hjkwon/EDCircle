@@ -1,6 +1,7 @@
 #include "line.h"
 
 #include <algorithm>
+#include <opencv2/imgproc.hpp>
 
 Line::Line(float a, float b, float fitting_error, bool is_parameter_of_x,
            EdgeSegment edge_segment) {
@@ -28,13 +29,9 @@ Line::Line(float a, float b, float fitting_error, bool is_parameter_of_x,
   }
 }
 
-Position Line::begin() const {
-  return edge_segment_.front().first;
-}
+Position Line::begin() const { return edge_segment_.front().first; }
 
-Position Line::end() const {
-  return edge_segment_.back().first;
-}
+Position Line::end() const { return edge_segment_.back().first; }
 
 Position Line::vector() const {
   return Position(edge_segment_.back().first.x - edge_segment_.front().first.x,
@@ -85,6 +82,13 @@ float Line::get_angle() const {
 }
 
 EdgeSegment Line::edge_segment() const { return edge_segment_; }
+
+void Line::Draw(cv::Mat& image, cv::Scalar color) const {
+  Position b = begin();
+  Position e = end();
+
+  cv::line(image, cv::Point(b.x, b.y), cv::Point(e.x, e.y), color);
+}
 
 Line Line::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float sum_xx = 0.0f;

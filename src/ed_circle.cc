@@ -5,6 +5,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "primitives/circle.h"
 #include "primitives/line.h"
 
 EDCircle::EDCircle() {
@@ -63,8 +64,9 @@ void EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment() {
   }
 }
 
-std::vector<Arc> EDCircle::ExtractArcFromLines(const std::vector<Line>& lines) {
-  std::vector<Arc> arcs;
+std::vector<std::vector<Line>> EDCircle::ExtractArcCandidates(
+    const std::vector<Line>& lines) {
+  std::vector<std::vector<Line>> arc_candidates;
 
   std::vector<float> lengths;
   std::vector<float> angles;
@@ -75,7 +77,7 @@ std::vector<Arc> EDCircle::ExtractArcFromLines(const std::vector<Line>& lines) {
   turn_directions.reserve(lines.size());
 
   if (lines.size() < 3) {
-    return arcs;
+    return arc_candidates;
   }
 
   lengths.push_back(lines[0].get_length());
@@ -130,10 +132,9 @@ std::vector<Arc> EDCircle::ExtractArcFromLines(const std::vector<Line>& lines) {
       continue;
     }
 
-    std::vector<Line> arc_lines;
-    arc_lines.insert(arc_lines.end(), candidnate_begin, candidnate_end);
-    Arc arc(arc_lines);
-    arcs.push_back(arc);
+    std::vector<Line> candidate;
+    candidate.insert(candidate.end(), candidnate_begin, candidnate_end);
+    arc_candidates.push_back(candidate);
 
     if (candidnate_end == lines.end()) {
       break;
@@ -145,16 +146,67 @@ std::vector<Arc> EDCircle::ExtractArcFromLines(const std::vector<Line>& lines) {
     info_index++;
   }
 
-  return arcs;
+  return arc_candidates;
 }
 
 void EDCircle::ExtractArcs() {
   minimum_line_length_ = int(
       round(-4.0f * log(sqrt(float(width_) * float(height_))) / log(0.125f)));
 
-  for (auto& edge : edge_segments_) {
-    std::vector<Line> lines = ExtractLineSegments(edge);
+  arcs_.clear();
 
-    std::vector<Arc> arcs = ExtractArcFromLines(lines);
+  std::vector<Line> lines;
+
+  for (const auto& edge : edge_segments_) {
+    std::vector<Line> lines = ExtractLineSegments(edge);
+    std::vector<std::vector<Line>> arc_candidates = ExtractArcCandidates(lines);
+
+    for (const auto& candidate : arc_candidates) {
+      Circle circle = Circle::FitFromEdgeSegment(candidate);
+
+       if (circle.fitting_error() <= 1.5f) {
+        Arc arc(candidate);
+        arcs_.push_back(arc);
+        continue;
+      }
+
+      auto search_begin = candidate.begin();
+      auto search_end = candidate.begin();
+      search_end += 3;
+
+      while (search_begin != candidate.end()) {
+        std::vector<Line> chunk_of_candidate;
+        chunk_of_candidate.insert(chunk_of_candidate.end(), search_begin,
+                                  search_end);
+
+        Circle circle = Circle::FitFromEdgeSegment(chunk_of_candidate);
+
+        if (circle.fitting_error() > 1.5f) {
+          search_end--;
+
+          std::vector<Line> new_arc_lines;
+          new_arc_lines.insert(new_arc_lines.end(), search_begin, search_end);
+
+          Arc arc(new_arc_lines);
+          arcs_.push_back(arc);
+
+          search_begin = search_end;
+        }
+
+        if (search_end == candidate.end()) {
+          if (circle.fitting_error() <= 1.5f) {
+            std::vector<Line> new_arc_lines;
+            new_arc_lines.insert(new_arc_lines.end(), search_begin, search_end);
+
+            Arc arc(new_arc_lines);
+            arcs_.push_back(arc);
+          }
+
+          break;
+        }
+
+        search_end++;
+      }
+    }
   }
 }

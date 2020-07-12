@@ -18,11 +18,13 @@ class EDCircle : public EDLine {
   bool isClosedEdgeSegment(const EdgeSegment& edge_segment);
   void DetectCircleAndEllipseFromClosedEdgeSegment();
   void ExtractArcs();
-  std::vector<Arc> ExtractArcFromLines(const std::vector<Line>& line_segments);
+  std::vector<std::vector<Line>> ExtractArcCandidates(
+      const std::vector<Line>& line_segments);
 
  protected:
   std::vector<Circle> circles_;
   std::vector<Ellipse> ellipses_;
+  std::vector<Arc> arcs_;
 
   float circle_fitting_error_threshold_;
   float ellipse_fitting_error_threshold_;
