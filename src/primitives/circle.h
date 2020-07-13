@@ -13,9 +13,11 @@ class Circle {
 
  public:
   void Draw(cv::Mat &image, cv::Scalar color);
-  float fitting_error() const { return fitting_error_; }
-  PositionF get_center() const { return PositionF(parameters_[0], parameters_[1]); }
-  float get_radius() const { return parameters_[2]; }
+  float fitting_error() const;
+  PositionF get_center() const;
+  float get_radius() const;
+  float get_circumference() const;
+  Position get_positionAt(float degree) const;
 
  public:
   static Circle FitFromEdgeSegment(const EdgeSegment &edge_segment);

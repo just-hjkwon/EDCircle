@@ -17,13 +17,17 @@ EDCircle::EDCircle() {
 }
 
 void EDCircle::DetectCircle(GrayImage& image) {
+  image_ = std::make_shared<GrayImage>(image.width(), image.height(),
+                                       image.buffer());
+
   DetectEdge(image);
 
   DetectCircleAndEllipseFromClosedEdgeSegment();
   ExtractArcs();
   ExtendArcsAndDetectCircle();
   ExtendArcsAndDetectEllipse();
- }
+  ValidateCircleAndEllipse();
+}
 
 bool EDCircle::isClosedEdgeSegment(const EdgeSegment& edge_segment) {
   auto first_edge = edge_segment.front();
@@ -221,8 +225,8 @@ void EDCircle::ExtendArcsAndDetectCircle() {
       Arc arc(extended_lines);
 
       float length = arc.length();
-      float circum = 2.0f * arc.fitted_circle().get_radius() * M_PI;
-      if (length > circum * 0.5f) {
+      float circumference = 2.0f * arc.fitted_circle().get_radius() * M_PI;
+      if (length > circumference * 0.5f) {
         circles_.push_back(arc.fitted_circle());
       } else {
         extended_arcs.push_back(arc);
@@ -310,13 +314,9 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
       Ellipse ellipse = Ellipse::FitFromEdgeSegment(extended_lines);
 
       float length = arc.length();
-      float circum =
-          2.0f * M_PI *
-          sqrt((ellipse.axis_lengths_[0] * ellipse.axis_lengths_[0] +
-                ellipse.axis_lengths_[1] * ellipse.axis_lengths_[1]) /
-               2.0f);
+      float circumference = ellipse.get_circumference();
 
-      if (length > circum * 0.5f) {
+      if (length > circumference * 0.5f) {
         ellipses_.push_back(ellipse);
       } else {
         Arc arc(extended_lines);
@@ -331,6 +331,103 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
   }
 
   arcs_ = extended_arcs;
+}
+
+void EDCircle::ValidateCircleAndEllipse() {
+  std::vector<Circle> circles;
+
+  for (auto c : circles_) {
+    if (isValidCircle(c) == true) {
+      circles.push_back(c);
+    }
+  }
+
+  circles_ = circles;
+}
+
+bool EDCircle::isValidCircle(const Circle& circle) {
+  float circumference = circle.get_circumference();
+  float degree_step = 1.0f / circumference;
+
+  unsigned char* buffer = image_->buffer();
+
+  std::vector<Position> positions;
+  positions.reserve(int(ceil(circumference)));
+
+  Position prev_p(-1, -1);
+  for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
+    Position p = circle.get_positionAt(degree);
+    if (p.x != prev_p.x && p.y != prev_p.y) {
+      positions.push_back(p);
+      prev_p = p;
+    }
+  }
+
+  PositionF center = circle.get_center();
+
+  int circumference_length = int(positions.size());
+  int aligned_count = 0;
+
+  for (auto p : positions) {
+    int offset = p.y * width_ + p.x;
+
+    int p00 = int(buffer[offset]);
+    int p01 = int(buffer[offset + 1]);
+    int p10 = int(buffer[offset + width_]);
+    int p11 = int(buffer[offset + width_ + 1]);
+
+    float gx = (p01 - p00 + p11 - p10) / 2.0f;
+    float gy = (p10 - p00 + p11 - p01) / 2.0f;
+    float magnitude = sqrt(gx * gx + gy * gy);
+
+    PositionF point_vector(p.x - center.x, p.y - center.y);
+
+    float tangent1 = atan2(gy, gx);
+    float tangent2 = atan2(-gy, -gx);
+
+    float level_line_angle = atan2(point_vector.y, point_vector.x);
+    float angle_diff = std::min(abs(tangent1 - level_line_angle),
+                                abs(tangent2 - level_line_angle));
+
+    if (angle_diff <= M_PI / 8.0f) {
+      aligned_count++;
+    }
+  }
+
+  float nfa = getCircleNFA(circumference_length, aligned_count);
+
+  if (nfa <= 1.0f) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+float EDCircle::getCircleNFA(int circumference_length, int aligned_count) {
+  float N = pow(sqrt(width_ * height_), 5.0);
+
+  float factorial = 0.0f;
+  for (auto i = aligned_count; i <= circumference_length; ++i) {
+    int diff1 = circumference_length - i;
+    int diff2 = circumference_length - diff1;
+    int bigger_diff = std::max(diff1, diff2);
+    int smaller_diff = std::min(diff1, diff2);
+
+    float _f = 1.0f;
+
+    for (auto n = bigger_diff + 1; n <= circumference_length; ++n) {
+      _f *= float(n);
+    }
+    for (auto n = 2; n <= smaller_diff; ++n) {
+      _f /= float(n);
+    }
+
+    _f *= pow(precision_, float(i)) *
+          pow(1.0f - precision_, float(circumference_length - i));
+    factorial += _f;
+  }
+
+  return N * factorial;
 }
 
 void EDCircle::ExtractArcs() {
@@ -365,7 +462,7 @@ void EDCircle::ExtractArcs() {
 
         Circle circle = Circle::FitFromEdgeSegment(chunk_of_candidate);
 
-        if (circle.fitting_error() > 1.5f) {
+        if (circle.fitting_error() > 1.5f && chunk_of_candidate.size() >= 3) {
           search_end--;
 
           std::vector<Line> new_arc_lines;

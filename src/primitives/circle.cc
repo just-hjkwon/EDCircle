@@ -1,5 +1,8 @@
 #include "circle.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <opencv2/imgproc.hpp>
 
 Circle::Circle(float center_x, float center_y, float radius,
@@ -9,6 +12,25 @@ Circle::Circle(float center_x, float center_y, float radius,
 void Circle::Draw(cv::Mat& image, cv::Scalar color) {
   cv::circle(image, cv::Point(parameters_[0], parameters_[1]), parameters_[2],
              color);
+}
+
+float Circle::fitting_error() const { return fitting_error_; }
+
+PositionF Circle::get_center() const {
+  return PositionF(parameters_[0], parameters_[1]);
+}
+
+float Circle::get_radius() const { return parameters_[2]; }
+
+float Circle::get_circumference() const { return parameters_[2] * 2.0f * M_PI; }
+
+Position Circle::get_positionAt(float degree) const {
+  float x = cos(degree / 180.0f * M_PI) * parameters_[2];
+  float y = sin(degree / 180.0f * M_PI) * parameters_[2];
+  x += parameters_[0];
+  y += parameters_[1];
+
+  return Position(int(round(x)), int(round(y)));
 }
 
 Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {

@@ -13,6 +13,7 @@ class Ellipse {
           float fitting_error);
 
  public:
+  float get_circumference();
   float fitting_error() { return fitting_error_; }
   void Draw(cv::Mat &image, cv::Scalar color);
 
