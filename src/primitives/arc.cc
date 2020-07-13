@@ -25,10 +25,10 @@ float Arc::ComputeNearestDistanceWithEndPoint(const Arc& other) const {
 
   float nearest_distance = FLT_MAX;
 
-  std::min(nearest_distance, p0.DistanceWith(o_p0));
-  std::min(nearest_distance, p0.DistanceWith(o_p1));
-  std::min(nearest_distance, p1.DistanceWith(o_p0));
-  std::min(nearest_distance, p1.DistanceWith(o_p1));
+  nearest_distance = std::min(nearest_distance, p0.DistanceWith(o_p0));
+  nearest_distance = std::min(nearest_distance, p0.DistanceWith(o_p1));
+  nearest_distance = std::min(nearest_distance, p1.DistanceWith(o_p0));
+  nearest_distance = std::min(nearest_distance, p1.DistanceWith(o_p1));
 
   return nearest_distance;
 }
