@@ -13,9 +13,11 @@ class Ellipse {
           float fitting_error);
 
  public:
-  float get_circumference();
+  float get_circumference() const;
+  PositionF get_center() const;
+  Position get_positionAt(float degree) const;
   float fitting_error() { return fitting_error_; }
-  void Draw(cv::Mat &image, cv::Scalar color);
+  void Draw(cv::Mat &image, cv::Scalar color) const;
 
  public:
   static Ellipse FitFromEdgeSegment(const EdgeSegment &edge_segment);

@@ -29,7 +29,7 @@ Ellipse::Ellipse(float a, float b, float c, float d, float e, float f,
   axis_lengths_[1] = (-1.0f * sqrt(term0 * (term1 - term2))) / term4;
 }
 
-float Ellipse::get_circumference() {
+float Ellipse::get_circumference() const {
   return 2.0f *
          sqrt((axis_lengths_[0] * axis_lengths_[0] +
                axis_lengths_[1] * axis_lengths_[1]) /
@@ -37,7 +37,24 @@ float Ellipse::get_circumference() {
          M_PI;
 }
 
-void Ellipse::Draw(cv::Mat& image, cv::Scalar color) {
+PositionF Ellipse::get_center() const { return PositionF(cx_, cy_); }
+
+Position Ellipse::get_positionAt(float degree) const {
+  float angle = degree / 180.0f * M_PI;
+
+  float new_aspect_x = cos(angle);
+  float new_aspect_y = sin(angle);
+  angle = atan2(new_aspect_y, new_aspect_x);
+
+  float ideal_x = cx_ + axis_lengths_[0] * cos(angle) * cos(angle_) -
+                  axis_lengths_[1] * sin(angle) * sin(angle_);
+  float ideal_y = cy_ + axis_lengths_[0] * cos(angle) * sin(angle_) +
+                  axis_lengths_[1] * sin(angle) * cos(angle_);
+
+  return Position(int(round(ideal_x)), int(round(ideal_y)));
+}
+
+void Ellipse::Draw(cv::Mat& image, cv::Scalar color) const {
   cv::ellipse(image, cv::Point2f(cx_, cy_),
               cv::Size(axis_lengths_[0], axis_lengths_[1]),
               angle_ / M_PI * 180.0f, 0.0, 360.0, color);

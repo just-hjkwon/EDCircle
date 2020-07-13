@@ -343,13 +343,21 @@ void EDCircle::ValidateCircleAndEllipse() {
   }
 
   circles_ = circles;
+
+  std::vector<Ellipse> ellipses;
+
+  for (auto e : ellipses_) {
+    if (isValidEllipse(e) == true) {
+      ellipses.push_back(e);
+    }
+  }
+
+  ellipses_ = ellipses;
 }
 
 bool EDCircle::isValidCircle(const Circle& circle) {
   float circumference = circle.get_circumference();
   float degree_step = 1.0f / circumference;
-
-  unsigned char* buffer = image_->buffer();
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));
@@ -367,6 +375,8 @@ bool EDCircle::isValidCircle(const Circle& circle) {
 
   int circumference_length = int(positions.size());
   int aligned_count = 0;
+
+  unsigned char* buffer = image_->buffer();
 
   for (auto p : positions) {
     int offset = p.y * width_ + p.x;
@@ -386,6 +396,69 @@ bool EDCircle::isValidCircle(const Circle& circle) {
     float tangent2 = atan2(-gy, -gx);
 
     float level_line_angle = atan2(point_vector.y, point_vector.x);
+    float angle_diff = std::min(abs(tangent1 - level_line_angle),
+                                abs(tangent2 - level_line_angle));
+
+    if (angle_diff <= M_PI / 8.0f) {
+      aligned_count++;
+    }
+  }
+
+  float nfa = getCircleNFA(circumference_length, aligned_count);
+
+  if (nfa <= 1.0f) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
+  float circumference = ellipse.get_circumference();
+  float degree_step = 1.0f / circumference;
+
+  std::vector<Position> positions;
+  positions.reserve(int(ceil(circumference)));
+
+  Position prev_p(-1, -1);
+  for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
+    Position p = ellipse.get_positionAt(degree);
+    if (p.x != prev_p.x && p.y != prev_p.y) {
+      positions.push_back(p);
+      prev_p = p;
+    }
+  }
+
+  PositionF center = ellipse.get_center();
+
+  int circumference_length = int(positions.size());
+  int aligned_count = 0;
+
+  unsigned char* buffer = image_->buffer();
+
+  for (auto p : positions) {
+    int offset = p.y * width_ + p.x;
+
+    int p00 = int(buffer[offset]);
+    int p01 = int(buffer[offset + 1]);
+    int p10 = int(buffer[offset + width_]);
+    int p11 = int(buffer[offset + width_ + 1]);
+
+    float gx = (p01 - p00 + p11 - p10) / 2.0f;
+    float gy = (p10 - p00 + p11 - p01) / 2.0f;
+
+    PositionF point_vector(p.x - center.x, p.y - center.y);
+    float angle = atan2(point_vector.y, point_vector.x);
+
+    float new_aspect_x = cos(angle - ellipse.angle_) / ellipse.axis_lengths_[0];
+    float new_aspect_y =
+        sin(angle - ellipse.angle_) / ellipse.axis_lengths_[1];
+
+    float level_line_angle = atan2(new_aspect_y, new_aspect_x) + ellipse.angle_;
+
+    float tangent1 = atan2(gy, gx);
+    float tangent2 = atan2(-gy, -gx);
+
     float angle_diff = std::min(abs(tangent1 - level_line_angle),
                                 abs(tangent2 - level_line_angle));
 

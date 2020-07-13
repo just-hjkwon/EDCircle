@@ -24,6 +24,7 @@ class EDCircle : public EDLine {
   void ExtendArcsAndDetectEllipse();
   void ValidateCircleAndEllipse();
   bool isValidCircle(const Circle &circle);
+  bool isValidEllipse(const Ellipse& ellipse);
   
 
   float getCircleNFA(int circumference_length, int aligned_count);

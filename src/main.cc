@@ -11,7 +11,7 @@
 #include "image/gray_image.h"
 
 int main(int argc, char *argv[]) {
-  cv::Mat input_image = cv::imread("Boofcv_logo_circles_frontpage.jpg", cv::IMREAD_GRAYSCALE);
+  cv::Mat input_image = cv::imread("images2.jpg", cv::IMREAD_GRAYSCALE);
   GrayImage image = GrayImage::FromMat(input_image);
 
   Filter gaussian_filter = FilterFactory::CreateGaussianFilter(5, 1.0);
