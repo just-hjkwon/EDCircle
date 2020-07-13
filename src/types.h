@@ -3,13 +3,17 @@
 
 #include <list>
 
-
 template <typename T>
 class Position_ {
  public:
   Position_(T _x, T _y) {
     x = _x;
     y = _y;
+  }
+
+ public:
+  float DistanceWith(const Position_<T>& other) {
+    return sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y));
   }
 
  public:
@@ -27,8 +31,6 @@ class Position : public Position_<int> {
   Position(int x, int y) : Position_<int>(x, y){};
 };
 
-class EdgeSegment : public std::list<std::pair<Position, float>> {
-
-};
+class EdgeSegment : public std::list<std::pair<Position, float>> {};
 
 #endif
