@@ -256,12 +256,12 @@ Position EdgeDrawing::FindNextConnectingPosition(Position pos,
   }
 }
 
-inline float EdgeDrawing::magnitudeAt(Position pos) {
+float EdgeDrawing::magnitudeAt(Position pos) {
   std::size_t offset = get_offset(pos);
   return magnitude_->buffer()[offset];
 }
 
-inline EdgeDirection EdgeDrawing::directionAt(Position pos) {
+EdgeDirection EdgeDrawing::directionAt(Position pos) {
   std::size_t offset = get_offset(pos);
   return (EdgeDirection)(direction_map_->buffer()[offset]);
 }
@@ -271,7 +271,7 @@ void EdgeDrawing::set_direction(Position pos, EdgeDirection direction) {
   direction_map_->buffer()[offset] = (unsigned char)direction;
 }
 
-inline void EdgeDrawing::set_edge(Position pos, bool value) {
+void EdgeDrawing::set_edge(Position pos, bool value) {
   std::size_t offset = get_offset(pos);
   if (value == true) {
     edge_map_->buffer()[offset] = 1;
@@ -289,11 +289,11 @@ inline bool EdgeDrawing::is_edge(Position pos) {
   }
 }
 
-inline std::size_t EdgeDrawing::get_offset(Position pos) {
+std::size_t EdgeDrawing::get_offset(Position pos) {
   return width_ * pos.y + pos.x;
 }
 
-inline bool EdgeDrawing::isValidPosition(Position pos) {
+bool EdgeDrawing::isValidPosition(Position pos) {
   if (pos.x < 0 || pos.x >= width_ || pos.y < 0 || pos.y >= height_) {
     return false;
   } else {

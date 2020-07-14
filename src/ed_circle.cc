@@ -132,9 +132,11 @@ std::vector<std::vector<Line>> EDCircle::ExtractArcCandidates(
       }
 
       current_turn_direction = turn_directions[info_index];
-      candidnate_begin = candidnate_end;
-      candidnate_end++;
-      info_index++;
+
+      candidnate_begin++;
+      candidnate_end = candidnate_begin + 1;
+      info_index = std::distance(lines.begin(), candidnate_begin);
+
       continue;
     }
 
@@ -232,7 +234,17 @@ void EDCircle::ExtendArcsAndDetectCircle() {
         extended_arcs.push_back(arc);
       }
     } else {
-      extended_arcs.push_back(target_arc);
+      Arc arc(extended_lines);
+      if (arc.fitted_circle().fitting_error() <= 1.5f) {
+        float length = arc.length();
+        float circumference = 2.0f * arc.fitted_circle().get_radius() * M_PI;
+
+        if (length > circumference * 0.5f) {
+          circles_.push_back(arc.fitted_circle());
+        } else {
+          extended_arcs.push_back(arc);
+        }
+      }
     }
 
     arcs_.insert(arcs_.end(), extended_candidates.begin(),
@@ -323,7 +335,19 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
         extended_arcs.push_back(arc);
       }
     } else {
-      extended_arcs.push_back(target_arc);
+      Arc arc(extended_lines);
+      Ellipse ellipse = Ellipse::FitFromEdgeSegment(extended_lines);
+
+      if (ellipse.fitting_error() <= 1.5f) {
+        float length = arc.length();
+        float circumference = 2.0f * arc.fitted_circle().get_radius() * M_PI;
+
+        if (length > circumference * 0.5f) {
+          ellipses_.push_back(ellipse);
+        } else {
+          extended_arcs.push_back(arc);
+        }
+      }
     }
 
     arcs_.insert(arcs_.end(), extended_candidates.begin(),
@@ -451,8 +475,7 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
     float angle = atan2(point_vector.y, point_vector.x);
 
     float new_aspect_x = cos(angle - ellipse.angle_) / ellipse.axis_lengths_[0];
-    float new_aspect_y =
-        sin(angle - ellipse.angle_) / ellipse.axis_lengths_[1];
+    float new_aspect_y = sin(angle - ellipse.angle_) / ellipse.axis_lengths_[1];
 
     float level_line_angle = atan2(new_aspect_y, new_aspect_x) + ellipse.angle_;
 
@@ -528,6 +551,8 @@ void EDCircle::ExtractArcs() {
       auto search_end = candidate.begin();
       search_end += 3;
 
+      bool is_found = false;
+
       while (search_begin != candidate.end()) {
         std::vector<Line> chunk_of_candidate;
         chunk_of_candidate.insert(chunk_of_candidate.end(), search_begin,
@@ -536,15 +561,30 @@ void EDCircle::ExtractArcs() {
         Circle circle = Circle::FitFromEdgeSegment(chunk_of_candidate);
 
         if (circle.fitting_error() > 1.5f && chunk_of_candidate.size() >= 3) {
-          search_end--;
+          if (is_found == true) {
+            search_end--;
 
-          std::vector<Line> new_arc_lines;
-          new_arc_lines.insert(new_arc_lines.end(), search_begin, search_end);
+            std::vector<Line> new_arc_lines;
+            new_arc_lines.insert(new_arc_lines.end(), search_begin, search_end);
 
-          Arc arc(new_arc_lines);
-          arcs_.push_back(arc);
+            Arc arc(new_arc_lines);
+            arcs_.push_back(arc);
 
-          search_begin = search_end;
+            search_begin = search_end;
+            is_found = false;
+            continue;
+          } else {
+            search_begin++;
+
+            if (std::distance(search_begin, candidate.end()) < 3) {
+              break;
+            } else {
+              is_found = false;
+              search_end = search_begin;
+              search_end += 3;
+              continue;
+            }
+          }
         }
 
         if (search_end == candidate.end()) {
@@ -558,7 +598,7 @@ void EDCircle::ExtractArcs() {
 
           break;
         }
-
+        is_found = true;
         search_end++;
       }
     }
