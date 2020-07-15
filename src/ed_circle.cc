@@ -381,7 +381,7 @@ void EDCircle::ValidateCircleAndEllipse() {
 
 bool EDCircle::isValidCircle(const Circle& circle) {
   float circumference = circle.get_circumference();
-  float degree_step = 1.0f / circumference;
+  float degree_step = 1.0f / circumference / 10.0f;
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));
@@ -427,7 +427,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
       aligned_count++;
     }
   }
-
+   
   float nfa = getCircleNFA(circumference_length, aligned_count);
 
   if (nfa <= 1.0f) {
@@ -439,7 +439,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
 
 bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   float circumference = ellipse.get_circumference();
-  float degree_step = 1.0f / circumference;
+  float degree_step = 1.0f / circumference / 10.0f;
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));
@@ -500,26 +500,28 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
 }
 
 float EDCircle::getCircleNFA(int circumference_length, int aligned_count) {
-  float N = pow(sqrt(width_ * height_), 5.0);
+  double N = pow(sqrt(width_ * height_), 5.0);
 
-  float factorial = 0.0f;
+  double factorial = 0.0f;
   for (auto i = aligned_count; i <= circumference_length; ++i) {
     int diff1 = circumference_length - i;
     int diff2 = circumference_length - diff1;
     int bigger_diff = std::max(diff1, diff2);
     int smaller_diff = std::min(diff1, diff2);
 
-    float _f = 1.0f;
+    double _f = 0.0f;
 
     for (auto n = bigger_diff + 1; n <= circumference_length; ++n) {
-      _f *= float(n);
+      _f += log(n);
     }
     for (auto n = 2; n <= smaller_diff; ++n) {
-      _f /= float(n);
+      _f -= log(n);
     }
 
-    _f *= pow(precision_, float(i)) *
-          pow(1.0f - precision_, float(circumference_length - i));
+    _f += log(pow(precision_, double(i)) *
+               pow(1.0f - precision_, double(circumference_length - i)));
+
+    _f = exp(_f);
     factorial += _f;
   }
 
