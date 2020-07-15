@@ -27,6 +27,9 @@ Ellipse::Ellipse(float a, float b, float c, float d, float e, float f,
 
   axis_lengths_[0] = (-1.0f * sqrt(term0 * (term1 + term2))) / term4;
   axis_lengths_[1] = (-1.0f * sqrt(term0 * (term1 - term2))) / term4;
+
+  cos_angle_ = cos(angle_);
+  sin_angle_ = sin(angle_);
 }
 
 float Ellipse::get_circumference() const {
@@ -42,16 +45,19 @@ PositionF Ellipse::get_center() const { return PositionF(cx_, cy_); }
 Position Ellipse::get_positionAt(float degree) const {
   float angle = degree / 180.0f * M_PI;
 
+  float cos_angle = cos(angle);
+  float sin_angle = sin(angle);
+
   float new_aspect_x = cos(angle);
   float new_aspect_y = sin(angle);
   angle = atan2(new_aspect_y, new_aspect_x);
 
-  float ideal_x = cx_ + axis_lengths_[0] * cos(angle) * cos(angle_) -
-                  axis_lengths_[1] * sin(angle) * sin(angle_);
-  float ideal_y = cy_ + axis_lengths_[0] * cos(angle) * sin(angle_) +
-                  axis_lengths_[1] * sin(angle) * cos(angle_);
+  float ideal_x = cx_ + axis_lengths_[0] * cos_angle * cos_angle_ -
+                  axis_lengths_[1] * sin_angle * sin_angle_;
+  float ideal_y = cy_ + axis_lengths_[0] * cos_angle * sin_angle_ +
+                  axis_lengths_[1] * sin_angle * cos_angle_;
 
-  return Position(int(round(ideal_x)), int(round(ideal_y)));
+  return Position(int(ideal_x + 0.5f), int(ideal_y + 0.5f));
 }
 
 void Ellipse::Draw(cv::Mat& image, cv::Scalar color) const {
@@ -140,10 +146,10 @@ float Ellipse::ComputeError(Position pos) {
   float new_aspect_y = sin(degree) / axis_lengths_[1];
   degree = atan2(new_aspect_y, new_aspect_x);
 
-  float ideal_x = cx_ + axis_lengths_[0] * cos(degree) * cos(angle_) -
-                  axis_lengths_[1] * sin(degree) * sin(angle_);
-  float ideal_y = cy_ + axis_lengths_[0] * cos(degree) * sin(angle_) +
-                  axis_lengths_[1] * sin(degree) * cos(angle_);
+  float ideal_x = cx_ + axis_lengths_[0] * cos(degree) * cos_angle_ -
+                  axis_lengths_[1] * sin(degree) * sin_angle_;
+  float ideal_y = cy_ + axis_lengths_[0] * cos(degree) * sin_angle_ +
+                  axis_lengths_[1] * sin(degree) * cos_angle_;
 
   float error =
       sqrt((ideal_x - x) * (ideal_x - x) + (ideal_y - y) * (ideal_y - y));

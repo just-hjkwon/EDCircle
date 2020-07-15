@@ -103,10 +103,7 @@ void EdgeDrawing::ExtractAnchor() {
 }
 
 void EdgeDrawing::ConnectingAnchors() {
-  std::vector<unsigned char> edge_map_buffer(width_ * height_);
-
-  edge_map_ = std::make_shared<Image<unsigned char>>(width_, height_,
-                                                     edge_map_buffer.data());
+  edge_map_ = std::make_shared<Image<unsigned char>>(width_, height_, nullptr);
 
   auto direction_map_ptr = direction_map_->buffer();
 

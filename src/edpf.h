@@ -19,6 +19,7 @@ class EDPF : public EdgeDrawing {
   void PrepareNFA();
   void ValidateSegments();
   bool IsValidSegment(EdgeSegment& segment);
+  bool IsValidSegment(float min_value, int segment_size);
   float get_NFA(float magnitude, int segment_length);
 
  protected:

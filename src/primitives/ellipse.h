@@ -34,6 +34,9 @@ class Ellipse {
   float angle_ = 0.0f;
 
   float fitting_error_ = 0.0f;
+
+  float cos_angle_ = 0.0f;
+  float sin_angle_ = 0.0f;
 };
 
 #endif

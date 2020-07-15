@@ -27,14 +27,43 @@ void EDCircle::DetectCircle(GrayImage& image) {
   start = std::chrono::system_clock::now();
   DetectEdge(image);
   sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::DetectEdge Elapsed time: " << sec.count() * 1000.0f << " ms"
-            << std::endl;
+  std::cout << "EDCircle::DetectEdge Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 
+  start = std::chrono::system_clock::now();
   DetectCircleAndEllipseFromClosedEdgeSegment();
+  sec = std::chrono::system_clock::now() - start;
+  std::cout
+      << "EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment Elapsed time: "
+      << sec.count() * 1000.0f << " ms" << std::endl;
+
+  start = std::chrono::system_clock::now();
   ExtractArcs();
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDCircle::ExtractArcs "
+               "Elapsed time: "
+            << sec.count() * 1000.0f << " ms" << std::endl;
+
+  start = std::chrono::system_clock::now();
   ExtendArcsAndDetectCircle();
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDCircle::ExtendArcsAndDetectCircle "
+               "Elapsed time: "
+            << sec.count() * 1000.0f << " ms" << std::endl;
+
+  start = std::chrono::system_clock::now();
   ExtendArcsAndDetectEllipse();
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDCircle::ExtendArcsAndDetectEllipse "
+               "Elapsed time: "
+            << sec.count() * 1000.0f << " ms" << std::endl;
+
+  start = std::chrono::system_clock::now();
   ValidateCircleAndEllipse();
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDCircle::ValidateCircleAndEllipse "
+               "Elapsed time: "
+            << sec.count() * 1000.0f << " ms" << std::endl;
 }
 
 void EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment() {
@@ -375,7 +404,7 @@ void EDCircle::ValidateCircleAndEllipse() {
 
 bool EDCircle::isValidCircle(const Circle& circle) {
   float circumference = circle.get_circumference();
-  float degree_step = 1.0f / circumference / 10.0f;
+  float degree_step = 1.0f / circumference;
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));
@@ -439,7 +468,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
 
 bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   float circumference = ellipse.get_circumference();
-  float degree_step = 1.0f / circumference / 10.0f;
+  float degree_step = 1.0f / circumference;
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));

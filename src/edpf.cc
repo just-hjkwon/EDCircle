@@ -99,7 +99,7 @@ void EDPF::PrepareNFA() {
   std::sort(magnitude_histogram_.begin(), magnitude_histogram_.end(),
             [](const std::pair<float, float> &a,
                const std::pair<float, float> &b) { return a.first > b.first; });
-  
+
   magnitude_histogram_.shrink_to_fit();
 
   N_p = 0;
@@ -117,35 +117,35 @@ void EDPF::ValidateSegments() {
     validation_list.push_back(segment);
 
     while (validation_list.size() > 0) {
-      EdgeSegment segment = validation_list.front();
+      EdgeSegment _segment = validation_list.front();
       validation_list.pop_front();
 
-      if (IsValidSegment(segment) == true) {
-        valid_edge_semgments.push_back(segment);
-        continue;
-      }
-
-      if (segment.size() <= 1) {
+      if (_segment.size() <= 1) {
         continue;
       }
 
       auto min_it = std::min_element(
-          segment.begin(), segment.end(),
+          _segment.begin(), _segment.end(),
           [](const auto &a, const auto &b) { return a.second < b.second; });
 
-      int left_distance = std::distance(segment.begin(), min_it);
-      int right_distance = segment.size() - left_distance - 1;
+      if (IsValidSegment(min_it->second, int(_segment.size())) == true) {
+        valid_edge_semgments.push_back(_segment);
+        continue;
+      }
 
-      if (left_distance > 0) {
+      int left_distance = std::distance(_segment.begin(), min_it);
+      int right_distance = _segment.size() - left_distance - 1;
+
+      if (left_distance > 1) {
         EdgeSegment new_segment;
-        new_segment.insert(new_segment.end(), segment.begin(), min_it);
+        new_segment.splice(new_segment.end(), _segment, _segment.begin(), min_it);
         validation_list.push_back(new_segment);
       }
 
-      if (right_distance > 0) {
+      if (right_distance > 1) {
         EdgeSegment new_segment;
         min_it++;
-        new_segment.insert(new_segment.end(), min_it, segment.end());
+        new_segment.splice(new_segment.end(), _segment, min_it, _segment.end());
         validation_list.push_back(new_segment);
       }
     }
@@ -161,6 +161,15 @@ bool EDPF::IsValidSegment(EdgeSegment &segment) {
       [](const auto &a, const auto &b) { return a.second < b.second; });
 
   float NPA = get_NFA(float(min_it->second), int(segment.size()));
+  if (NPA < 1.0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool EDPF::IsValidSegment(float min_value, int segment_size) {
+  float NPA = get_NFA(min_value, segment_size);
   if (NPA < 1.0) {
     return true;
   } else {

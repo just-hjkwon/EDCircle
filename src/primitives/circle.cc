@@ -30,7 +30,7 @@ Position Circle::get_positionAt(float degree) const {
   x += parameters_[0];
   y += parameters_[1];
 
-  return Position(int(round(x)), int(round(y)));
+  return Position(int(x + 0.5f), int(y + 0.5f));
 }
 
 Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
