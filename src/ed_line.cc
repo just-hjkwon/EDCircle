@@ -183,7 +183,3 @@ std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment &edge_segment) {
 
   return lines;
 }
-
-// Position LineSegment::begin() {}
-//
-// Position LineSegment::end() { return Position(); }

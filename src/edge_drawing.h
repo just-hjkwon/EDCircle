@@ -5,6 +5,7 @@
 
 #include "image/float_image.h"
 #include "image/gray_image.h"
+#include "primitives/edge_segment.h"
 
 enum class EdgeDirection : unsigned char {
   VerticalEdge = 0,

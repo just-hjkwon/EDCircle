@@ -15,7 +15,6 @@ class EDCircle : public EDLine {
   void DetectCircle(GrayImage& image);
 
  protected:
-  bool isClosedEdgeSegment(const EdgeSegment& edge_segment);
   void DetectCircleAndEllipseFromClosedEdgeSegment();
   void ExtractArcs();
   std::vector<std::vector<Line>> ExtractArcCandidates(

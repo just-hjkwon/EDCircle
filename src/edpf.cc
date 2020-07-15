@@ -1,6 +1,8 @@
 #include "edpf.h"
 
 #include <algorithm>
+#include <chrono>
+#include <iostream>
 
 EDPF::EDPF() : EdgeDrawing(EDPF::GradientThreshold(), 0.0f, 1) {}
 
@@ -8,12 +10,34 @@ void EDPF::DetectEdge(GrayImage &image) {
   width_ = image.width();
   height_ = image.height();
 
+  std::chrono::system_clock::time_point start;
+  std::chrono::duration<double> sec;
+
+  start = std::chrono::system_clock::now();
   PrepareEdgeMap(image);
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "PrepareEdgeMap Elapsed time: " << sec.count() << std::endl;
+
+  start = std::chrono::system_clock::now();
   ExtractAnchor();
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "ExtractAnchor Elapsed time: " << sec.count() << std::endl;
+
+  start = std::chrono::system_clock::now();
   SortAnchors();
+  std::cout << "SortAnchors Elapsed time: " << sec.count() << std::endl;
+
+  start = std::chrono::system_clock::now();
   ConnectingAnchors();
+  std::cout << "ConnectingAnchors Elapsed time: " << sec.count() << std::endl;
+
+  start = std::chrono::system_clock::now();
   PrepareNFA();
+  std::cout << "PrepareNFA Elapsed time: " << sec.count() << std::endl;
+
+  start = std::chrono::system_clock::now();
   ValidateSegments();
+  std::cout << "ValidateSegments Elapsed time: " << sec.count() << std::endl;
 }
 
 void EDPF::SortAnchors() {

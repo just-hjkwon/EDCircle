@@ -1,8 +1,10 @@
 #ifndef PRIMITIVES__LINE_H_
 #define PRIMITIVES__LINE_H_
 
-#include "../types.h"
 #include <opencv2/core.hpp>
+
+#include "../types.h"
+#include "edge_segment.h"
 
 class Line {
  public:

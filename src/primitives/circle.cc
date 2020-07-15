@@ -11,7 +11,7 @@ Circle::Circle(float center_x, float center_y, float radius,
 
 void Circle::Draw(cv::Mat& image, cv::Scalar color) {
   cv::circle(image, cv::Point(parameters_[0], parameters_[1]), parameters_[2],
-             color);
+             color, 2);
 }
 
 float Circle::fitting_error() const { return fitting_error_; }

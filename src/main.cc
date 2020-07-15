@@ -11,14 +11,20 @@
 #include "image/gray_image.h"
 
 int main(int argc, char *argv[]) {
-  cv::Mat input_image = cv::imread("images2.jpg", cv::IMREAD_GRAYSCALE);
+  cv::Mat input_image = cv::imread("download.jpg", cv::IMREAD_GRAYSCALE);
   GrayImage image = GrayImage::FromMat(input_image);
+
+  std::chrono::system_clock::time_point start =
+      std::chrono::system_clock::now();
 
   Filter gaussian_filter = FilterFactory::CreateGaussianFilter(5, 1.0);
   image.ApplyFilter(gaussian_filter);
-
+  std::chrono::duration<double> sec = std::chrono::system_clock::now() - start;
+  std::cout << "Elapsed time: " << sec.count() << std::endl;
   EDCircle ed_circle;
   ed_circle.DetectCircle(image);
+
+
 
   cv::Mat i;
   cv::cvtColor(input_image, i, cv::COLOR_GRAY2BGR);

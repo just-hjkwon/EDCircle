@@ -1,5 +1,6 @@
 #include "ed_circle.h"
 
+#include <chrono>
 #include <iostream>
 
 #define _USE_MATH_DEFINES
@@ -20,7 +21,12 @@ void EDCircle::DetectCircle(GrayImage& image) {
   image_ = std::make_shared<GrayImage>(image.width(), image.height(),
                                        image.buffer());
 
+  std::chrono::system_clock::time_point start =
+      std::chrono::system_clock::now();
+
   DetectEdge(image);
+  std::chrono::duration<double> sec = std::chrono::system_clock::now() - start;
+  std::cout << "DetectEdge Elapsed time: " << sec.count() << std::endl;
 
   DetectCircleAndEllipseFromClosedEdgeSegment();
   ExtractArcs();
@@ -29,27 +35,13 @@ void EDCircle::DetectCircle(GrayImage& image) {
   ValidateCircleAndEllipse();
 }
 
-bool EDCircle::isClosedEdgeSegment(const EdgeSegment& edge_segment) {
-  auto first_edge = edge_segment.front();
-  auto last_edge = edge_segment.back();
-
-  int x_diff = abs(first_edge.first.x - last_edge.first.x);
-  int y_diff = abs(first_edge.first.y - last_edge.first.y);
-
-  if (x_diff <= 1 && y_diff <= 1) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 void EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment() {
   circles_.clear();
   ellipses_.clear();
 
   for (auto edge_it = edge_segments_.begin();
        edge_it != edge_segments_.end();) {
-    if (isClosedEdgeSegment(*edge_it) == true) {
+    if (edge_it->isClosed() == true) {
       Circle circle = Circle::FitFromEdgeSegment(*edge_it);
 
       if (circle.fitting_error() < circle_fitting_error_threshold_) {
@@ -389,6 +381,10 @@ bool EDCircle::isValidCircle(const Circle& circle) {
   Position prev_p(-1, -1);
   for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
     Position p = circle.get_positionAt(degree);
+    if (p.x < 0 || p.x >= width_ - 1 || p.y < 0 || p.y >= height_ - 1) {
+      continue;
+    }
+
     if (p.x != prev_p.x && p.y != prev_p.y) {
       positions.push_back(p);
       prev_p = p;
@@ -427,7 +423,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
       aligned_count++;
     }
   }
-   
+
   float nfa = getCircleNFA(circumference_length, aligned_count);
 
   if (nfa <= 1.0f) {
@@ -436,6 +432,8 @@ bool EDCircle::isValidCircle(const Circle& circle) {
     return false;
   }
 }
+
+#include <opencv2/highgui.hpp>
 
 bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   float circumference = ellipse.get_circumference();
@@ -519,7 +517,7 @@ float EDCircle::getCircleNFA(int circumference_length, int aligned_count) {
     }
 
     _f += log(pow(precision_, double(i)) *
-               pow(1.0f - precision_, double(circumference_length - i)));
+              pow(1.0f - precision_, double(circumference_length - i)));
 
     _f = exp(_f);
     factorial += _f;

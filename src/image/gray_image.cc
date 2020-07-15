@@ -19,7 +19,7 @@ GrayImage GrayImage::MakeGrayFilteredImage(Filter &filter) {
   auto filtered_ptr = filtered_buffer.data();
   auto filter_ptr = filter.buffer();
 
-#if 1
+#if 0
   for (auto y = 0; y < height_; ++y) {
     auto filtered_y_ptr = filtered_ptr + (y * width_);
 
