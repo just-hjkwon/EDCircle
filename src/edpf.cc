@@ -16,28 +16,38 @@ void EDPF::DetectEdge(GrayImage &image) {
   start = std::chrono::system_clock::now();
   PrepareEdgeMap(image);
   sec = std::chrono::system_clock::now() - start;
-  std::cout << "PrepareEdgeMap Elapsed time: " << sec.count() << std::endl;
+  std::cout << "EDPF::PrepareEdgeMap Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 
   start = std::chrono::system_clock::now();
   ExtractAnchor();
   sec = std::chrono::system_clock::now() - start;
-  std::cout << "ExtractAnchor Elapsed time: " << sec.count() << std::endl;
+  std::cout << "EDPF::ExtractAnchor Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 
   start = std::chrono::system_clock::now();
   SortAnchors();
-  std::cout << "SortAnchors Elapsed time: " << sec.count() << std::endl;
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDPF::SortAnchors Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 
   start = std::chrono::system_clock::now();
   ConnectingAnchors();
-  std::cout << "ConnectingAnchors Elapsed time: " << sec.count() << std::endl;
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDPF::ConnectingAnchors Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 
   start = std::chrono::system_clock::now();
   PrepareNFA();
-  std::cout << "PrepareNFA Elapsed time: " << sec.count() << std::endl;
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDPF::PrepareNFA Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 
   start = std::chrono::system_clock::now();
   ValidateSegments();
-  std::cout << "ValidateSegments Elapsed time: " << sec.count() << std::endl;
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDPF::ValidateSegments Elapsed time: " << sec.count() * 1000.0f
+            << " ms" << std::endl;
 }
 
 void EDPF::SortAnchors() {
@@ -53,43 +63,43 @@ void EDPF::SortAnchors() {
 void EDPF::PrepareNFA() {
   magnitude_histogram_.clear();
   magnitude_histogram_.reserve(width_ * height_);
+  std::chrono::system_clock::time_point start;
+  std::chrono::duration<double> sec;
 
-  int count = 0;
-  for (auto y = 0; y < height_; ++y) {
-    auto magnitude_ptr = magnitude_->buffer() + (width_ * y);
+  start = std::chrono::system_clock::now();
 
-    for (auto x = 0; x < width_; ++x) {
-      bool found = false;
+  std::vector<float> magnitudes;
+  magnitudes.insert(magnitudes.end(), magnitude_->buffer(),
+                    magnitude_->buffer() + width_ * height_);
 
-      if (magnitude_ptr[x] == 0.0f) {
-        continue;
-      }
+  std::sort(magnitudes.begin(), magnitudes.end());
 
-      for (auto &bin : magnitude_histogram_) {
-        if (bin.first == magnitude_ptr[x]) {
-          bin.second += 1.0f;
-          found = true;
-          break;
-        }
-      }
+  float last_value = 0.0f;
+  int current_index = -1;
+  int zero_count = 0;
+  for (auto m : magnitudes) {
+    if (m == 0.0f) {
+      zero_count++;
+      continue;
+    }
 
-      if (found == false) {
-        magnitude_histogram_.push_back(
-            std::pair<float, int>(magnitude_ptr[x], 1));
-      }
-
-      count++;
+    if (m != last_value) {
+      magnitude_histogram_.push_back(std::make_pair(m, 1.0f));
+      current_index++;
+      last_value = m;
+    } else {
+      magnitude_histogram_[current_index].second += 1.0f;
     }
   }
-
+  int count = magnitudes.size() - zero_count;
   for (auto &bin : magnitude_histogram_) {
     bin.second /= float(count);
   }
-  std::sort(magnitude_histogram_.begin(), magnitude_histogram_.end(),
-            [](const std::pair<float, int> &a, const std::pair<float, int> &b) {
-              return a.first > b.first;
-            });
 
+  std::sort(magnitude_histogram_.begin(), magnitude_histogram_.end(),
+            [](const std::pair<float, float> &a,
+               const std::pair<float, float> &b) { return a.first > b.first; });
+  
   magnitude_histogram_.shrink_to_fit();
 
   N_p = 0;

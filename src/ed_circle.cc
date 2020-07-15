@@ -21,12 +21,14 @@ void EDCircle::DetectCircle(GrayImage& image) {
   image_ = std::make_shared<GrayImage>(image.width(), image.height(),
                                        image.buffer());
 
-  std::chrono::system_clock::time_point start =
-      std::chrono::system_clock::now();
+  std::chrono::system_clock::time_point start;
+  std::chrono::duration<double> sec;
 
+  start = std::chrono::system_clock::now();
   DetectEdge(image);
-  std::chrono::duration<double> sec = std::chrono::system_clock::now() - start;
-  std::cout << "DetectEdge Elapsed time: " << sec.count() << std::endl;
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "EDCircle::DetectEdge Elapsed time: " << sec.count() * 1000.0f << " ms"
+            << std::endl;
 
   DetectCircleAndEllipseFromClosedEdgeSegment();
   ExtractArcs();
