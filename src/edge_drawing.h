@@ -61,7 +61,7 @@ class EdgeDrawing {
   std::vector<Position> anchors_;
   std::shared_ptr<Image<unsigned char>> edge_map_;
 
-  std::vector<EdgeSegment> edge_segments_;
+  std::list<EdgeSegment> edge_segments_;
 };
 
 #endif

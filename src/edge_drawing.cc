@@ -108,7 +108,6 @@ void EdgeDrawing::ConnectingAnchors() {
   auto direction_map_ptr = direction_map_->buffer();
 
   edge_segments_.clear();
-  edge_segments_.reserve(anchors_.size());
 
   for (auto& anchor : anchors_) {
     EdgeSegment edge_segment;
@@ -196,8 +195,6 @@ void EdgeDrawing::ConnectingAnchors() {
 
     edge_segments_.push_back(edge_segment);
   }
-
-  edge_segments_.shrink_to_fit();
 }
 
 Position EdgeDrawing::FindNextConnectingPosition(Position pos,

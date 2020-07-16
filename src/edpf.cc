@@ -109,12 +109,22 @@ void EDPF::PrepareNFA() {
 }
 
 void EDPF::ValidateSegments() {
-  std::vector<EdgeSegment> valid_edge_semgments;
-  valid_edge_semgments.reserve(edge_segments_.size());
+  std::list<EdgeSegment> valid_edge_semgments;
 
-  for (auto &segment : edge_segments_) {
+  for (auto it = edge_segments_.begin(); it != edge_segments_.end();) {
+    if (it->size() <= 1) {
+      it = edge_segments_.erase(it);
+    } else {
+      it++;
+    }
+  }
+
+  auto segment_it = edge_segments_.begin();
+    for (auto &segment : edge_segments_) {
+
     std::list<EdgeSegment> validation_list;
     validation_list.push_back(segment);
+    segment_it = edge_segments_.begin();
 
     while (validation_list.size() > 0) {
       EdgeSegment _segment = validation_list.front();
@@ -138,7 +148,8 @@ void EDPF::ValidateSegments() {
 
       if (left_distance > 1) {
         EdgeSegment new_segment;
-        new_segment.splice(new_segment.end(), _segment, _segment.begin(), min_it);
+        new_segment.splice(new_segment.end(), _segment, _segment.begin(),
+                           min_it);
         validation_list.push_back(new_segment);
       }
 
@@ -151,7 +162,6 @@ void EDPF::ValidateSegments() {
     }
   }
 
-  valid_edge_semgments.shrink_to_fit();
   edge_segments_ = valid_edge_semgments;
 }
 
