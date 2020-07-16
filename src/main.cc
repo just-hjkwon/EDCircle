@@ -17,6 +17,7 @@ struct Config {
  public:
   std::string filename;
   bool video_mode;
+  bool display_info;
   bool error;
 };
 
@@ -80,22 +81,44 @@ void print_invalid_input_file(std::string filename) {
 }
 
 Config parse_args(int argc, char *argv[]) {
-  if (argc != 3) {
+  if (argc >= 3) {
     return Config{"", false, true};
   }
 
   bool video_mode = false;
-  if (std::string("-v").compare(argv[1]) == 0) {
-    video_mode = true;
-  } else if (std::string("-i").compare(argv[1]) == 0) {
-    video_mode = false;
-  } else {
-    return Config{"", false, true};
+  std::string filename;
+  bool error = true;
+  bool display_info = false;
+
+  for (int i = 1; i < argc; i++) {
+    if (std::string("-v").compare(argv[i]) == 0) {
+      video_mode = true;
+      if (i + 1 < argc) {
+        filename = argv[i + 1];
+        i++;
+      }
+    } else if (std::string("-i").compare(argv[i]) == 0) {
+      video_mode = false;
+      if (i + 1 < argc) {
+        filename = argv[i + 1];
+        i++;
+      }
+    } else if (std::string("-d").compare(argv[i]) == 0) {
+      display_info = true;
+    } else {
+      error = true;
+    }
   }
 
-  std::string filename(argv[2]);
+  if (filename.compare("") == 0) {
+    error = true;
+  }
 
-  return Config{filename, video_mode, false};
+  if (error == true) {
+    return Config{"", false, false, true};
+  } else {
+    return Config{filename, video_mode, display_info, false};
+  }
 }
 
 void DetectCircle(cv::Mat &cv_image) {
@@ -107,21 +130,9 @@ void DetectCircle(cv::Mat &cv_image) {
   }
 
   GrayImage image = GrayImage::FromMat(cv_gray_image);
-
-  std::chrono::system_clock::time_point start;
-  std::chrono::duration<double> sec;
-
-  start = std::chrono::system_clock::now();
   Filter gaussian_filter = FilterFactory::CreateGaussianFilter(5, 1.0);
   image.ApplyFilter(gaussian_filter);
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "Gaussian Elapsed time: " << sec.count() * 1000.0f << " ms"
-            << std::endl;
 
-  start = std::chrono::system_clock::now();
   EDCircle ed_circle;
   ed_circle.DetectCircle(image);
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "DetectCircle Elapsed time: " << sec.count() * 1000.0f << " ms"
-            << std::endl;
 }
