@@ -11,7 +11,7 @@ Circle::Circle(float center_x, float center_y, float radius,
 
 void Circle::Draw(cv::Mat& image, cv::Scalar color) {
   cv::circle(image, cv::Point(parameters_[0], parameters_[1]), parameters_[2],
-             color);
+             color, 2);
 }
 
 float Circle::fitting_error() const { return fitting_error_; }
@@ -30,7 +30,7 @@ Position Circle::get_positionAt(float degree) const {
   x += parameters_[0];
   y += parameters_[1];
 
-  return Position(int(round(x)), int(round(y)));
+  return Position(int(x + 0.5f), int(y + 0.5f));
 }
 
 Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
@@ -46,16 +46,16 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float sum_vuu = 0.0f;
 
   for (auto e : edge_segment) {
-    mean_x += float(e.first.x);
-    mean_y += float(e.first.y);
+    mean_x += float(e.position.x);
+    mean_y += float(e.position.y);
   }
 
   mean_x /= float(edge_segment.size());
   mean_y /= float(edge_segment.size());
 
   for (auto e : edge_segment) {
-    float u = (float(e.first.x) - mean_x);
-    float v = (float(e.first.y) - mean_y);
+    float u = (float(e.position.x) - mean_x);
+    float v = (float(e.position.y) - mean_y);
 
     sum_uu += u * u;
     sum_vv += v * v;
@@ -85,8 +85,8 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float error = 0.0f;
 
   for (auto e : edge_segment) {
-    float x = float(e.first.x);
-    float y = float(e.first.y);
+    float x = float(e.position.x);
+    float y = float(e.position.y);
     error += abs(sqrt(((x - center_x) * (x - center_x)) +
                       ((y - center_y) * (y - center_y))) -
                  radius);

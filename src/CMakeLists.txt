@@ -51,6 +51,8 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_circle.h"	
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/line.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/line.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/primitives/edge_segment.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/primitives/edge_segment.cc"	
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/circle.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/circle.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/ellipse.h"

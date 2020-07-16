@@ -10,7 +10,12 @@ class Image {
   Image(std::size_t width, std::size_t height, const T* buffer) {
     width_ = width;
     height_ = height;
-    buffer_.insert(buffer_.end(), buffer, buffer + (width_ * height_));
+
+    if (buffer == nullptr) {
+      buffer_.resize(width * height);
+    } else {
+      buffer_.insert(buffer_.end(), buffer, buffer + (width_ * height_));
+    }
   }
   Image() = delete;
 

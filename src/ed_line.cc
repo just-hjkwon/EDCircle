@@ -31,7 +31,7 @@ bool EDLine::isValidLineSegment(const Line &line) {
   int segment_length = int(edge_segment.size());
 
   for (const auto &e : edge_segment) {
-    std::size_t offset = get_offset(e.first);
+    std::size_t offset = get_offset(e.position);
 
     float gx = x_gradient_->buffer()[offset];
     float gy = y_gradient_->buffer()[offset];
@@ -152,7 +152,7 @@ std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment &edge_segment) {
     }
 
     while (line_candidate_end != edge_segment.end()) {
-      float error = new_line.ComputeError(line_candidate_end->first);
+      float error = new_line.ComputeError(line_candidate_end->position);
 
       if (error > 1.0) {
         break;
@@ -183,7 +183,3 @@ std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment &edge_segment) {
 
   return lines;
 }
-
-// Position LineSegment::begin() {}
-//
-// Position LineSegment::end() { return Position(); }

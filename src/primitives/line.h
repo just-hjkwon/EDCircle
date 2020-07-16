@@ -1,8 +1,10 @@
 #ifndef PRIMITIVES__LINE_H_
 #define PRIMITIVES__LINE_H_
 
-#include "../types.h"
 #include <opencv2/core.hpp>
+
+#include "../types.h"
+#include "edge_segment.h"
 
 class Line {
  public:
@@ -17,7 +19,7 @@ class Line {
   float length() const;
 
   float ComputeError(const EdgeSegment& edge_segment);
-  float ComputeError(const Position& pos);
+  float ComputeError(const Position& position);
   float fitting_error() { return fitting_error_; }
   float get_angle() const;
   EdgeSegment edge_segment() const;
@@ -34,8 +36,6 @@ class Line {
   float fitting_error_ = 0.0f;
   bool is_parameter_of_x_ = false;
   float length_ = 0.0f;
-
-  int range[2] = {0, 0};
 };
 
 #endif

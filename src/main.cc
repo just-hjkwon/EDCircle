@@ -9,16 +9,28 @@
 #include "edpf.h"
 #include "image/filters.h"
 #include "image/gray_image.h"
+#include "primitives/circle.h"
 
 int main(int argc, char *argv[]) {
-  cv::Mat input_image = cv::imread("images2.jpg", cv::IMREAD_GRAYSCALE);
+  cv::Mat input_image = cv::imread("Lenna.png", cv::IMREAD_GRAYSCALE);
   GrayImage image = GrayImage::FromMat(input_image);
 
+  std::chrono::system_clock::time_point start;
+  std::chrono::duration<double> sec;
+
+  start = std::chrono::system_clock::now();
   Filter gaussian_filter = FilterFactory::CreateGaussianFilter(5, 1.0);
   image.ApplyFilter(gaussian_filter);
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "Gaussian Elapsed time: " << sec.count() * 1000.0f << " ms"
+            << std::endl;
 
+  start = std::chrono::system_clock::now();
   EDCircle ed_circle;
   ed_circle.DetectCircle(image);
+  sec = std::chrono::system_clock::now() - start;
+  std::cout << "DetectCircle Elapsed time: " << sec.count() * 1000.0f << " ms"
+            << std::endl;
 
   cv::Mat i;
   cv::cvtColor(input_image, i, cv::COLOR_GRAY2BGR);

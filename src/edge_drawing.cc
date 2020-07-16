@@ -6,9 +6,7 @@ EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
                          int anchor_extraction_interval)
     : magnitude_threshold_(magnitude_threshold),
       anchor_threshold_(anchor_threshold),
-      anchor_extraction_interval_(anchor_extraction_interval) {
-
-}
+      anchor_extraction_interval_(anchor_extraction_interval) {}
 
 void EdgeDrawing::DetectEdge(GrayImage& image) {
   width_ = image.width();
@@ -94,7 +92,8 @@ void EdgeDrawing::ExtractAnchor() {
 
       if (magnitude - neighbor0 >= anchor_threshold_ &&
           magnitude - neighbor1 >= anchor_threshold_) {
-        anchors_.push_back(Position(x, y));
+        Edgel anchor{Position(x, y), magnitude};
+        anchors_.push_back(anchor);
       }
     }
   }
@@ -103,28 +102,24 @@ void EdgeDrawing::ExtractAnchor() {
 }
 
 void EdgeDrawing::ConnectingAnchors() {
-  std::vector<unsigned char> edge_map_buffer(width_ * height_);
-
-  edge_map_ = std::make_shared<Image<unsigned char>>(width_, height_,
-                                                     edge_map_buffer.data());
+  edge_map_ = std::make_shared<Image<unsigned char>>(width_, height_, nullptr);
 
   auto direction_map_ptr = direction_map_->buffer();
 
   edge_segments_.clear();
-  edge_segments_.reserve(anchors_.size());
 
   for (auto& anchor : anchors_) {
     EdgeSegment edge_segment;
 
-    if (is_edge(anchor) == true) {
+    if (is_edge(anchor.position) == true) {
       continue;
     }
 
-    set_edge(anchor, true);
-    edge_segment.push_back(std::make_pair(anchor, magnitudeAt(anchor)));
+    set_edge(anchor.position, true);
+    edge_segment.push_back(anchor);
     bool push_back = true;
 
-    EdgeDirection direction = directionAt(anchor);
+    EdgeDirection direction = directionAt(anchor.position);
 
     ConnectingAim aims[2];
 
@@ -143,7 +138,7 @@ void EdgeDrawing::ConnectingAnchors() {
         push_back = false;
       }
 
-      Position current_position(anchor.x, anchor.y);
+      Position current_position = anchor.position;
       ConnectingAim currenct_aim = aim;
       EdgeDirection current_direction = direction;
 
@@ -155,19 +150,20 @@ void EdgeDrawing::ConnectingAnchors() {
           break;
         }
 
-        float magnitude = magnitudeAt(next_position);
+        float next_magnitude = magnitudeAt(next_position);
         bool edge = is_edge(next_position);
 
-        if (magnitude == 0.0f || edge == true) {
+        if (next_magnitude == 0.0f || edge == true) {
           break;
         }
 
         set_edge(next_position, true);
 
+        Edgel next_edge{next_position, next_magnitude};
         if (push_back == true) {
-          edge_segment.push_back(std::make_pair(next_position, magnitude));
+          edge_segment.push_back(next_edge);
         } else {
-          edge_segment.push_front(std::make_pair(next_position, magnitude));
+          edge_segment.push_front(next_edge);
         }
 
         EdgeDirection next_direction = directionAt(next_position);
@@ -199,14 +195,12 @@ void EdgeDrawing::ConnectingAnchors() {
 
     edge_segments_.push_back(edge_segment);
   }
-
-  edge_segments_.shrink_to_fit();
 }
 
-Position EdgeDrawing::FindNextConnectingPosition(Position pos,
+Position EdgeDrawing::FindNextConnectingPosition(Position position,
                                                  ConnectingAim direction) {
   float neighbor_magnitudes[3] = {0.0f, 0.0f, 0.0f};
-  Position neighbor_positions[3] = {pos, pos, pos};
+  Position neighbor_positions[3] = {position, position, position};
 
   switch (direction) {
     case ConnectingAim::Left:
@@ -256,23 +250,23 @@ Position EdgeDrawing::FindNextConnectingPosition(Position pos,
   }
 }
 
-inline float EdgeDrawing::magnitudeAt(Position pos) {
-  std::size_t offset = get_offset(pos);
+float EdgeDrawing::magnitudeAt(Position position) {
+  std::size_t offset = get_offset(position);
   return magnitude_->buffer()[offset];
 }
 
-inline EdgeDirection EdgeDrawing::directionAt(Position pos) {
-  std::size_t offset = get_offset(pos);
+EdgeDirection EdgeDrawing::directionAt(Position position) {
+  std::size_t offset = get_offset(position);
   return (EdgeDirection)(direction_map_->buffer()[offset]);
 }
 
-void EdgeDrawing::set_direction(Position pos, EdgeDirection direction) {
-  std::size_t offset = get_offset(pos);
+void EdgeDrawing::set_direction(Position position, EdgeDirection direction) {
+  std::size_t offset = get_offset(position);
   direction_map_->buffer()[offset] = (unsigned char)direction;
 }
 
-inline void EdgeDrawing::set_edge(Position pos, bool value) {
-  std::size_t offset = get_offset(pos);
+void EdgeDrawing::set_edge(Position position, bool value) {
+  std::size_t offset = get_offset(position);
   if (value == true) {
     edge_map_->buffer()[offset] = 1;
   } else {
@@ -280,8 +274,8 @@ inline void EdgeDrawing::set_edge(Position pos, bool value) {
   }
 }
 
-inline bool EdgeDrawing::is_edge(Position pos) {
-  std::size_t offset = get_offset(pos);
+inline bool EdgeDrawing::is_edge(Position position) {
+  std::size_t offset = get_offset(position);
   if (edge_map_->buffer()[offset] == 1) {
     return true;
   } else {
@@ -289,12 +283,12 @@ inline bool EdgeDrawing::is_edge(Position pos) {
   }
 }
 
-inline std::size_t EdgeDrawing::get_offset(Position pos) {
-  return width_ * pos.y + pos.x;
+std::size_t EdgeDrawing::get_offset(Position position) {
+  return width_ * position.y + position.x;
 }
 
-inline bool EdgeDrawing::isValidPosition(Position pos) {
-  if (pos.x < 0 || pos.x >= width_ || pos.y < 0 || pos.y >= height_) {
+bool EdgeDrawing::isValidPosition(Position position) {
+  if (position.x < 0 || position.x >= width_ || position.y < 0 || position.y >= height_) {
     return false;
   } else {
     return true;

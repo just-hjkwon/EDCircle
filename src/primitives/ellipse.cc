@@ -27,6 +27,9 @@ Ellipse::Ellipse(float a, float b, float c, float d, float e, float f,
 
   axis_lengths_[0] = (-1.0f * sqrt(term0 * (term1 + term2))) / term4;
   axis_lengths_[1] = (-1.0f * sqrt(term0 * (term1 - term2))) / term4;
+
+  cos_angle_ = cos(angle_);
+  sin_angle_ = sin(angle_);
 }
 
 float Ellipse::get_circumference() const {
@@ -42,28 +45,31 @@ PositionF Ellipse::get_center() const { return PositionF(cx_, cy_); }
 Position Ellipse::get_positionAt(float degree) const {
   float angle = degree / 180.0f * M_PI;
 
+  float cos_angle = cos(angle);
+  float sin_angle = sin(angle);
+
   float new_aspect_x = cos(angle);
   float new_aspect_y = sin(angle);
   angle = atan2(new_aspect_y, new_aspect_x);
 
-  float ideal_x = cx_ + axis_lengths_[0] * cos(angle) * cos(angle_) -
-                  axis_lengths_[1] * sin(angle) * sin(angle_);
-  float ideal_y = cy_ + axis_lengths_[0] * cos(angle) * sin(angle_) +
-                  axis_lengths_[1] * sin(angle) * cos(angle_);
+  float ideal_x = cx_ + axis_lengths_[0] * cos_angle * cos_angle_ -
+                  axis_lengths_[1] * sin_angle * sin_angle_;
+  float ideal_y = cy_ + axis_lengths_[0] * cos_angle * sin_angle_ +
+                  axis_lengths_[1] * sin_angle * cos_angle_;
 
-  return Position(int(round(ideal_x)), int(round(ideal_y)));
+  return Position(int(ideal_x + 0.5f), int(ideal_y + 0.5f));
 }
 
 void Ellipse::Draw(cv::Mat& image, cv::Scalar color) const {
   cv::ellipse(image, cv::Point2f(cx_, cy_),
               cv::Size(axis_lengths_[0], axis_lengths_[1]),
-              angle_ / M_PI * 180.0f, 0.0, 360.0, color);
+              angle_ / M_PI * 180.0f, 0.0, 360.0, color, 2);
 }
 
 Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   std::vector<cv::Point2f> points;
   for (const auto& e : edge_segment) {
-    points.push_back(cv::Point2f(e.first.x, e.first.y));
+    points.push_back(cv::Point2f(e.position.x, e.position.y));
   }
 
   cv::RotatedRect rect = cv::fitEllipseDirect(points);
@@ -109,7 +115,7 @@ Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float error = 0.0f;
 
   for (const auto& edge : edge_segment) {
-    error += ellipse.ComputeError(edge.first);
+    error += ellipse.ComputeError(edge.position);
   }
   error /= float(edge_segment.size());
 
@@ -130,9 +136,9 @@ Ellipse Ellipse::FitFromEdgeSegment(const std::vector<Line>& lines) {
   return FitFromEdgeSegment(whole_edge_segment);
 }
 
-float Ellipse::ComputeError(Position pos) {
-  float x = float(pos.x);
-  float y = float(pos.y);
+float Ellipse::ComputeError(Position position) {
+  float x = float(position.x);
+  float y = float(position.y);
 
   float degree = atan2(y - cy_, x - cx_) - angle_;
 
@@ -140,10 +146,10 @@ float Ellipse::ComputeError(Position pos) {
   float new_aspect_y = sin(degree) / axis_lengths_[1];
   degree = atan2(new_aspect_y, new_aspect_x);
 
-  float ideal_x = cx_ + axis_lengths_[0] * cos(degree) * cos(angle_) -
-                  axis_lengths_[1] * sin(degree) * sin(angle_);
-  float ideal_y = cy_ + axis_lengths_[0] * cos(degree) * sin(angle_) +
-                  axis_lengths_[1] * sin(degree) * cos(angle_);
+  float ideal_x = cx_ + axis_lengths_[0] * cos(degree) * cos_angle_ -
+                  axis_lengths_[1] * sin(degree) * sin_angle_;
+  float ideal_y = cy_ + axis_lengths_[0] * cos(degree) * sin_angle_ +
+                  axis_lengths_[1] * sin(degree) * cos_angle_;
 
   float error =
       sqrt((ideal_x - x) * (ideal_x - x) + (ideal_y - y) * (ideal_y - y));

@@ -31,6 +31,9 @@ class Position : public Position_<int> {
   Position(int x, int y) : Position_<int>(x, y){};
 };
 
-class EdgeSegment : public std::list<std::pair<Position, float>> {};
+struct Edgel {
+  Position position;
+  float magnitude;
+};
 
 #endif

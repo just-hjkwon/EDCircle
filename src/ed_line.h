@@ -5,19 +5,6 @@
 #include "image/gray_image.h"
 #include "primitives/line.h"
 
-//class LineSegment {
-// public:
-//  EdgeSegment edges;
-//
-//  float parameters_[2] = {0.0f, 0.0f};
-//  float fitting_error_ = 0.0f;
-//  bool is_parameter_of_x = true;
-//
-// public:
-//  // Position begin();
-//  // Position end();
-//};
-
 class EDLine : public EDPF {
  public:
   EDLine();
