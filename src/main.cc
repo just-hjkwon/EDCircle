@@ -9,9 +9,10 @@
 #include "edpf.h"
 #include "image/filters.h"
 #include "image/gray_image.h"
+#include "primitives/circle.h"
 
 int main(int argc, char *argv[]) {
-  cv::Mat input_image = cv::imread("download.jpg", cv::IMREAD_GRAYSCALE);
+  cv::Mat input_image = cv::imread("Lenna.png", cv::IMREAD_GRAYSCALE);
   GrayImage image = GrayImage::FromMat(input_image);
 
   std::chrono::system_clock::time_point start;
