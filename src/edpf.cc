@@ -94,21 +94,23 @@ void EDPF::PrepareNFA() {
             [](const std::pair<float, float> &a,
                const std::pair<float, float> &b) { return a.first > b.first; });
 
-  magnitude_cumulative_distribution_[0].second /= float(count);
-  magnitude_cumulative_distribution_table_.insert(
-      std::make_pair(magnitude_cumulative_distribution_[0].first,
-                     magnitude_cumulative_distribution_[0].second));
-  for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
-    magnitude_cumulative_distribution_[i].second =
-        magnitude_cumulative_distribution_[i - 1].second +
-        (magnitude_cumulative_distribution_[i].second / float(count));
+  if (magnitude_cumulative_distribution_.size() > 0) {
+    magnitude_cumulative_distribution_[0].second /= float(count);
+    magnitude_cumulative_distribution_table_.insert(
+        std::make_pair(magnitude_cumulative_distribution_[0].first,
+                       magnitude_cumulative_distribution_[0].second));
+    for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
+      magnitude_cumulative_distribution_[i].second =
+          magnitude_cumulative_distribution_[i - 1].second +
+          (magnitude_cumulative_distribution_[i].second / float(count));
 
       magnitude_cumulative_distribution_table_.insert(
-        std::make_pair(magnitude_cumulative_distribution_[i].first,
-                       magnitude_cumulative_distribution_[i].second));
-  }
+          std::make_pair(magnitude_cumulative_distribution_[i].first,
+                         magnitude_cumulative_distribution_[i].second));
+    }
 
-  magnitude_cumulative_distribution_.shrink_to_fit();
+    magnitude_cumulative_distribution_.shrink_to_fit();
+  }
 
   N_p = 0;
   for (const auto &segment : edge_segments_) {
