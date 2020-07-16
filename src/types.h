@@ -31,4 +31,9 @@ class Position : public Position_<int> {
   Position(int x, int y) : Position_<int>(x, y){};
 };
 
+struct Edge {
+  Position position;
+  float magnitude;
+};
+
 #endif

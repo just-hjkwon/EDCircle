@@ -34,15 +34,15 @@ class EdgeDrawing {
   Position FindNextConnectingPosition(Position current,
                                       ConnectingAim direction);
 
-  float magnitudeAt(Position pos);
-  EdgeDirection directionAt(Position pos);
-  void set_direction(Position pos, EdgeDirection direction);
+  float magnitudeAt(Position position);
+  EdgeDirection directionAt(Position position);
+  void set_direction(Position position, EdgeDirection direction);
 
-  void set_edge(Position pos, bool value);
-  bool is_edge(Position pos);
+  void set_edge(Position position, bool value);
+  bool is_edge(Position position);
 
-  std::size_t get_offset(Position pos);
-  bool isValidPosition(Position pos);
+  std::size_t get_offset(Position position);
+  bool isValidPosition(Position position);
 
  protected:
   std::size_t width_;
@@ -58,7 +58,7 @@ class EdgeDrawing {
   std::shared_ptr<FloatImage> magnitude_;
   std::shared_ptr<Image<unsigned char>> direction_map_;
 
-  std::vector<Position> anchors_;
+  std::vector<Edge> anchors_;
   std::shared_ptr<Image<unsigned char>> edge_map_;
 
   std::list<EdgeSegment> edge_segments_;

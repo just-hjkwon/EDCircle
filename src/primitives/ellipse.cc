@@ -69,7 +69,7 @@ void Ellipse::Draw(cv::Mat& image, cv::Scalar color) const {
 Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   std::vector<cv::Point2f> points;
   for (const auto& e : edge_segment) {
-    points.push_back(cv::Point2f(e.first.x, e.first.y));
+    points.push_back(cv::Point2f(e.position.x, e.position.y));
   }
 
   cv::RotatedRect rect = cv::fitEllipseDirect(points);
@@ -115,7 +115,7 @@ Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float error = 0.0f;
 
   for (const auto& edge : edge_segment) {
-    error += ellipse.ComputeError(edge.first);
+    error += ellipse.ComputeError(edge.position);
   }
   error /= float(edge_segment.size());
 
@@ -136,9 +136,9 @@ Ellipse Ellipse::FitFromEdgeSegment(const std::vector<Line>& lines) {
   return FitFromEdgeSegment(whole_edge_segment);
 }
 
-float Ellipse::ComputeError(Position pos) {
-  float x = float(pos.x);
-  float y = float(pos.y);
+float Ellipse::ComputeError(Position position) {
+  float x = float(position.x);
+  float y = float(position.y);
 
   float degree = atan2(y - cy_, x - cx_) - angle_;
 

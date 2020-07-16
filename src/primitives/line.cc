@@ -13,34 +13,20 @@ Line::Line(float a, float b, float fitting_error, bool is_parameter_of_x,
   is_parameter_of_x_ = is_parameter_of_x;
   edge_segment_ = edge_segment;
 
-  range[0] = INT_MAX;
-  range[1] = -INT_MAX;
-
-  if (is_parameter_of_x_ == true) {
-    for (auto edge : edge_segment) {
-      range[0] = std::min(range[0], edge.first.x);
-      range[1] = std::max(range[1], edge.first.x);
-    }
-  } else {
-    for (auto edge : edge_segment) {
-      range[0] = std::min(range[0], edge.first.y);
-      range[1] = std::max(range[1], edge.first.y);
-    }
-  }
-
   Position p0 = begin();
   Position p1 = end();
 
   length_ = sqrt((p1.x - p0.x) * (p1.x - p0.x) + (p1.y - p0.y) * (p1.y - p0.y));
 }
 
-Position Line::begin() const { return edge_segment_.front().first; }
+Position Line::begin() const { return edge_segment_.front().position; }
 
-Position Line::end() const { return edge_segment_.back().first; }
+Position Line::end() const { return edge_segment_.back().position; }
 
 Position Line::vector() const {
-  return Position(edge_segment_.back().first.x - edge_segment_.front().first.x,
-                  edge_segment_.back().first.y - edge_segment_.front().first.y);
+  return Position(
+      edge_segment_.back().position.x - edge_segment_.front().position.x,
+      edge_segment_.back().position.y - edge_segment_.front().position.y);
 }
 
 float Line::length() const { return length_; }
@@ -49,7 +35,7 @@ float Line::ComputeError(const EdgeSegment& edge_segment) {
   float error = 0.0f;
 
   for (const auto& edge : edge_segment) {
-    error += ComputeError(edge.first);
+    error += ComputeError(edge.position);
   }
 
   error /= float(edge_segment.size());
@@ -57,10 +43,10 @@ float Line::ComputeError(const EdgeSegment& edge_segment) {
   return error;
 }
 
-float Line::ComputeError(const Position& pos) {
+float Line::ComputeError(const Position& position) {
   float error = 0.0f;
-  float x = float(pos.x);
-  float y = float(pos.y);
+  float x = float(position.x);
+  float y = float(position.y);
 
   if (is_parameter_of_x_ == true) {
     error = abs(parameters_[0] * x - y + parameters_[1]) /
@@ -99,11 +85,11 @@ Line Line::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float n = float(edge_segment.size());
 
   for (const auto& s : edge_segment) {
-    sum_xx += float(s.first.x * s.first.x);
-    sum_yy += float(s.first.y * s.first.y);
-    sum_xy += float(s.first.x * s.first.y);
-    sum_x += float(s.first.x);
-    sum_y += float(s.first.y);
+    sum_xx += float(s.position.x * s.position.x);
+    sum_yy += float(s.position.y * s.position.y);
+    sum_xy += float(s.position.x * s.position.y);
+    sum_x += float(s.position.x);
+    sum_y += float(s.position.y);
   }
 
   float inv_denominator_by_x = (sum_xx * n) - (sum_x * sum_x);

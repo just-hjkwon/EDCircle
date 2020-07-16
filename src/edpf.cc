@@ -52,17 +52,14 @@ void EDPF::DetectEdge(GrayImage &image) {
 
 void EDPF::SortAnchors() {
   std::sort(anchors_.begin(), anchors_.end(),
-            [=](const Position &a, const Position &b) -> bool {
-              float magnitude_a = magnitudeAt(a);
-              float magnitude_b = magnitudeAt(b);
-
-              return magnitude_a > magnitude_b;
+            [=](const Edge &a, const Edge &b) -> bool {
+              return a.magnitude > b.magnitude;
             });
 }
 
 void EDPF::PrepareNFA() {
-  magnitude_histogram_.clear();
-  magnitude_histogram_.reserve(width_ * height_);
+  magnitude_cumulative_distribution_.clear();
+  magnitude_cumulative_distribution_.reserve(width_ * height_);
   std::chrono::system_clock::time_point start;
   std::chrono::duration<double> sec;
 
@@ -84,93 +81,117 @@ void EDPF::PrepareNFA() {
     }
 
     if (m != last_value) {
-      magnitude_histogram_.push_back(std::make_pair(m, 1.0f));
+      magnitude_cumulative_distribution_.push_back(std::make_pair(m, 1.0f));
       current_index++;
       last_value = m;
     } else {
-      magnitude_histogram_[current_index].second += 1.0f;
+      magnitude_cumulative_distribution_[current_index].second += 1.0f;
     }
   }
   int count = magnitudes.size() - zero_count;
-  for (auto &bin : magnitude_histogram_) {
-    bin.second /= float(count);
-  }
 
-  std::sort(magnitude_histogram_.begin(), magnitude_histogram_.end(),
+  std::sort(magnitude_cumulative_distribution_.begin(), magnitude_cumulative_distribution_.end(),
             [](const std::pair<float, float> &a,
                const std::pair<float, float> &b) { return a.first > b.first; });
 
-  magnitude_histogram_.shrink_to_fit();
+  magnitude_cumulative_distribution_[0].second /= float(count);
+  for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
+    magnitude_cumulative_distribution_[i].second =
+        magnitude_cumulative_distribution_[i - 1].second +
+        (magnitude_cumulative_distribution_[i].second / float(count));
+  }
+
+  magnitude_cumulative_distribution_.shrink_to_fit();
 
   N_p = 0;
   for (const auto &segment : edge_segments_) {
-    N_p += (segment.size() * (segment.size() - 1) / 2);
+    N_p += (segment.size() * (segment.size() - 1));
   }
+  N_p /= 2;
 }
 
 void EDPF::ValidateSegments() {
-  std::list<EdgeSegment> valid_edge_semgments;
+  std::list<EdgeSegment> valid_edge_segments;
 
-  for (auto it = edge_segments_.begin(); it != edge_segments_.end();) {
-    if (it->size() <= 1) {
-      it = edge_segments_.erase(it);
-    } else {
-      it++;
+  for (auto &segment : edge_segments_) {
+    int segment_length = segment.size();
+
+    if (segment_length <= 1) {
+      continue;
     }
-  }
 
-  auto segment_it = edge_segments_.begin();
-    for (auto &segment : edge_segments_) {
+    if (segment_length <= 2) {
+      auto min_it = std::min_element(segment.begin(), segment.end(),
+                                     [](const Edge &a, const Edge &b) {
+                                       return a.magnitude < b.magnitude;
+                                     });
 
-    std::list<EdgeSegment> validation_list;
-    validation_list.push_back(segment);
-    segment_it = edge_segments_.begin();
+      if (IsValidSegment(min_it->magnitude, segment_length) == true) {
+        EdgeSegment valid_edge_segment;
+        valid_edge_segment.splice(valid_edge_segment.end(), segment,
+                                  segment.begin(), segment.end());
 
-    while (validation_list.size() > 0) {
-      EdgeSegment _segment = validation_list.front();
-      validation_list.pop_front();
+        valid_edge_segments.push_back(valid_edge_segment);
+        continue;
+      }
+    }
 
-      if (_segment.size() <= 1) {
+    std::list<std::pair<EdgeSegment::iterator, EdgeSegment::iterator>>
+        valid_candidates;
+    valid_candidates.push_back(std::make_pair(segment.begin(), segment.end()));
+
+    while (valid_candidates.size() > 0) {
+      auto sub_segment_begin_to_end = valid_candidates.front();
+      valid_candidates.pop_front();
+
+      int sub_segment_length = std::distance(sub_segment_begin_to_end.first,
+                                             sub_segment_begin_to_end.second);
+
+      if (sub_segment_length <= 1) {
         continue;
       }
 
-      auto min_it = std::min_element(
-          _segment.begin(), _segment.end(),
-          [](const auto &a, const auto &b) { return a.second < b.second; });
+      auto min_position = std::min_element(sub_segment_begin_to_end.first,
+                                           sub_segment_begin_to_end.second,
+                                           [](const auto &a, const auto &b) {
+                                             return a.magnitude < b.magnitude;
+                                           });
 
-      if (IsValidSegment(min_it->second, int(_segment.size())) == true) {
-        valid_edge_semgments.push_back(_segment);
+      if (IsValidSegment(min_position->magnitude, sub_segment_length) == true) {
+        EdgeSegment valid_edge_segment;
+        valid_edge_segment.splice(valid_edge_segment.end(), segment,
+                                  sub_segment_begin_to_end.first,
+                                  sub_segment_begin_to_end.second);
+        valid_edge_segments.push_back(valid_edge_segment);
         continue;
       }
 
-      int left_distance = std::distance(_segment.begin(), min_it);
-      int right_distance = _segment.size() - left_distance - 1;
+      int left_distance =
+          std::distance(sub_segment_begin_to_end.first, min_position);
+      int right_distance = sub_segment_length - left_distance - 1;
 
       if (left_distance > 1) {
-        EdgeSegment new_segment;
-        new_segment.splice(new_segment.end(), _segment, _segment.begin(),
-                           min_it);
-        validation_list.push_back(new_segment);
+        valid_candidates.push_back(
+            std::make_pair(sub_segment_begin_to_end.first, min_position));
       }
 
       if (right_distance > 1) {
-        EdgeSegment new_segment;
-        min_it++;
-        new_segment.splice(new_segment.end(), _segment, min_it, _segment.end());
-        validation_list.push_back(new_segment);
+        min_position++;
+        valid_candidates.push_back(
+            std::make_pair(min_position, sub_segment_begin_to_end.second));
       }
     }
   }
 
-  edge_segments_ = valid_edge_semgments;
+  edge_segments_ = valid_edge_segments;
 }
 
 bool EDPF::IsValidSegment(EdgeSegment &segment) {
   auto min_it = std::min_element(
       segment.begin(), segment.end(),
-      [](const auto &a, const auto &b) { return a.second < b.second; });
+      [](const auto &a, const auto &b) { return a.magnitude < b.magnitude; });
 
-  float NPA = get_NFA(float(min_it->second), int(segment.size()));
+  float NPA = get_NFA(min_it->magnitude, int(segment.size()));
   if (NPA < 1.0) {
     return true;
   } else {
@@ -190,13 +211,17 @@ bool EDPF::IsValidSegment(float min_value, int segment_size) {
 float EDPF::get_NFA(float magnitude, int segment_length) {
   float H = 0.0f;
 
-  for (auto bin : magnitude_histogram_) {
-    if (bin.first < magnitude) {
-      break;
+  if (magnitude_cumulative_distribution_[0].first < magnitude) {
+    H = 0.0f;
+  } else {
+    for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
+      if (magnitude_cumulative_distribution_[i].first < magnitude) {
+        H = magnitude_cumulative_distribution_[i - 1].second;
+        break;
+      }
     }
-    H += bin.second;
   }
 
-  float NPA = float(N_p) * pow(H, float(segment_length));
-  return NPA;
+  float NFA = float(N_p) * exp(float(segment_length) * log(H));
+  return NFA;
 }

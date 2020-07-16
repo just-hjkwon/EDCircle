@@ -46,16 +46,16 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float sum_vuu = 0.0f;
 
   for (auto e : edge_segment) {
-    mean_x += float(e.first.x);
-    mean_y += float(e.first.y);
+    mean_x += float(e.position.x);
+    mean_y += float(e.position.y);
   }
 
   mean_x /= float(edge_segment.size());
   mean_y /= float(edge_segment.size());
 
   for (auto e : edge_segment) {
-    float u = (float(e.first.x) - mean_x);
-    float v = (float(e.first.y) - mean_y);
+    float u = (float(e.position.x) - mean_x);
+    float v = (float(e.position.y) - mean_y);
 
     sum_uu += u * u;
     sum_vv += v * v;
@@ -85,8 +85,8 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   float error = 0.0f;
 
   for (auto e : edge_segment) {
-    float x = float(e.first.x);
-    float y = float(e.first.y);
+    float x = float(e.position.x);
+    float y = float(e.position.y);
     error += abs(sqrt(((x - center_x) * (x - center_x)) +
                       ((y - center_y) * (y - center_y))) -
                  radius);

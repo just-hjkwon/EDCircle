@@ -23,7 +23,7 @@ class EDPF : public EdgeDrawing {
   float get_NFA(float magnitude, int segment_length);
 
  protected:
-  std::vector<std::pair<float, float>> magnitude_histogram_;
+  std::vector<std::pair<float, float>> magnitude_cumulative_distribution_;
   int N_p = 0;
 };
 

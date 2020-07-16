@@ -24,7 +24,7 @@ class Ellipse {
   static Ellipse FitFromEdgeSegment(const std::vector<Line> &lines);
 
  protected:
-  float ComputeError(Position pos);
+  float ComputeError(Position position);
 
  public:
   float parameters_[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
