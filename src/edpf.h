@@ -1,6 +1,8 @@
 #ifndef EDPF_H_
 #define EDPF_H_
 
+#include <map>
+
 #include "edge_drawing.h"
 #include "image/gray_image.h"
 
@@ -24,6 +26,8 @@ class EDPF : public EdgeDrawing {
 
  protected:
   std::vector<std::pair<float, float>> magnitude_cumulative_distribution_;
+  std::map<float, float> magnitude_cumulative_distribution_table_;
+
   int N_p = 0;
 };
 

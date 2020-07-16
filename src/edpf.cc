@@ -95,10 +95,17 @@ void EDPF::PrepareNFA() {
                const std::pair<float, float> &b) { return a.first > b.first; });
 
   magnitude_cumulative_distribution_[0].second /= float(count);
+  magnitude_cumulative_distribution_table_.insert(
+      std::make_pair(magnitude_cumulative_distribution_[0].first,
+                     magnitude_cumulative_distribution_[0].second));
   for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
     magnitude_cumulative_distribution_[i].second =
         magnitude_cumulative_distribution_[i - 1].second +
         (magnitude_cumulative_distribution_[i].second / float(count));
+
+      magnitude_cumulative_distribution_table_.insert(
+        std::make_pair(magnitude_cumulative_distribution_[i].first,
+                       magnitude_cumulative_distribution_[i].second));
   }
 
   magnitude_cumulative_distribution_.shrink_to_fit();
@@ -209,18 +216,7 @@ bool EDPF::IsValidSegment(float min_value, int segment_size) {
 }
 
 float EDPF::get_NFA(float magnitude, int segment_length) {
-  float H = 0.0f;
-
-  if (magnitude_cumulative_distribution_[0].first < magnitude) {
-    H = 0.0f;
-  } else {
-    for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
-      if (magnitude_cumulative_distribution_[i].first < magnitude) {
-        H = magnitude_cumulative_distribution_[i - 1].second;
-        break;
-      }
-    }
-  }
+  float H = magnitude_cumulative_distribution_table_[magnitude];
 
   float NFA = float(N_p) * exp(float(segment_length) * log(H));
   return NFA;
