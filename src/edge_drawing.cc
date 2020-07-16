@@ -92,7 +92,7 @@ void EdgeDrawing::ExtractAnchor() {
 
       if (magnitude - neighbor0 >= anchor_threshold_ &&
           magnitude - neighbor1 >= anchor_threshold_) {
-        Edge anchor{Position(x, y), magnitude};
+        Edgel anchor{Position(x, y), magnitude};
         anchors_.push_back(anchor);
       }
     }
@@ -159,7 +159,7 @@ void EdgeDrawing::ConnectingAnchors() {
 
         set_edge(next_position, true);
 
-        Edge next_edge{next_position, next_magnitude};
+        Edgel next_edge{next_position, next_magnitude};
         if (push_back == true) {
           edge_segment.push_back(next_edge);
         } else {

@@ -52,7 +52,7 @@ void EDPF::DetectEdge(GrayImage &image) {
 
 void EDPF::SortAnchors() {
   std::sort(anchors_.begin(), anchors_.end(),
-            [=](const Edge &a, const Edge &b) -> bool {
+            [=](const Edgel &a, const Edgel &b) -> bool {
               return a.magnitude > b.magnitude;
             });
 }
@@ -129,7 +129,7 @@ void EDPF::ValidateSegments() {
 
     if (segment_length <= 2) {
       auto min_it = std::min_element(segment.begin(), segment.end(),
-                                     [](const Edge &a, const Edge &b) {
+                                     [](const Edgel &a, const Edgel &b) {
                                        return a.magnitude < b.magnitude;
                                      });
 

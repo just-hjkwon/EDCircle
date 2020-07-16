@@ -58,7 +58,7 @@ class EdgeDrawing {
   std::shared_ptr<FloatImage> magnitude_;
   std::shared_ptr<Image<unsigned char>> direction_map_;
 
-  std::vector<Edge> anchors_;
+  std::vector<Edgel> anchors_;
   std::shared_ptr<Image<unsigned char>> edge_map_;
 
   std::list<EdgeSegment> edge_segments_;

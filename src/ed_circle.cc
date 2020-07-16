@@ -383,7 +383,7 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
 void EDCircle::ValidateCircleAndEllipse() {
   std::vector<Circle> circles;
 
-  for (auto c : circles_) {
+  for (const auto &c : circles_) {
     if (isValidCircle(c) == true) {
       circles.push_back(c);
     }
@@ -393,7 +393,7 @@ void EDCircle::ValidateCircleAndEllipse() {
 
   std::vector<Ellipse> ellipses;
 
-  for (auto e : ellipses_) {
+  for (const auto &e : ellipses_) {
     if (isValidEllipse(e) == true) {
       ellipses.push_back(e);
     }
@@ -404,7 +404,7 @@ void EDCircle::ValidateCircleAndEllipse() {
 
 bool EDCircle::isValidCircle(const Circle& circle) {
   float circumference = circle.get_circumference();
-  float degree_step = 1.0f / circumference;
+  float degree_step = 1.0f;
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));
@@ -439,7 +439,6 @@ bool EDCircle::isValidCircle(const Circle& circle) {
 
     float gx = (p01 - p00 + p11 - p10) / 2.0f;
     float gy = (p10 - p00 + p11 - p01) / 2.0f;
-    float magnitude = sqrt(gx * gx + gy * gy);
 
     PositionF point_vector(p.x - center.x, p.y - center.y);
 
@@ -464,11 +463,9 @@ bool EDCircle::isValidCircle(const Circle& circle) {
   }
 }
 
-#include <opencv2/highgui.hpp>
-
 bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   float circumference = ellipse.get_circumference();
-  float degree_step = 1.0f / circumference;
+  float degree_step = 1.0;
 
   std::vector<Position> positions;
   positions.reserve(int(ceil(circumference)));

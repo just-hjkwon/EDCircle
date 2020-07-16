@@ -7,8 +7,8 @@ void GrayImage::ApplyFilter(Filter &filter) {
 
 GrayImage GrayImage::MakeGrayFilteredImage(Filter &filter) {
   auto filter_center = filter.center();
-  auto filter_width = filter.width();
-  auto filter_height = filter.height();
+  auto filter_width = int(filter.width());
+  auto filter_height = int(filter.height());
   int filter_y_start = filter_center.y - filter_height;
   int filter_x_start = filter_center.x - filter_width;
 
@@ -90,8 +90,8 @@ GrayImage GrayImage::MakeGrayFilteredImage(Filter &filter) {
 
 FloatImage GrayImage::MakeFloatFilteredImage(Filter &filter) {
   auto filter_center = filter.center();
-  auto filter_width = filter.width();
-  auto filter_height = filter.height();
+  auto filter_width = int(filter.width());
+  auto filter_height = int(filter.height());
   int filter_y_start = filter_center.y - filter_height;
   int filter_x_start = filter_center.x - filter_width;
 
