@@ -9,6 +9,8 @@
 
 class GrayImage : public Image<unsigned char> {
  public:
+  GrayImage(std::size_t width, std::size_t height)
+      : Image<unsigned char>(width, height){};
   GrayImage(std::size_t width, std::size_t height, const unsigned char* buffer)
       : Image<unsigned char>(width, height, buffer){};
 

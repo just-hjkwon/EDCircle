@@ -8,8 +8,8 @@ class Filter : public FloatImage {
  public:
   Filter(std::size_t filter_size, const float* buffer)
       : FloatImage(filter_size, filter_size, buffer),
-        center_(int(roundf(float(filter_size) / 2.0f)),
-                int(roundf(float(filter_size) / 2.0f))){};
+        center_(int(roundf(float(filter_size - 1) / 2.0f)),
+                int(roundf(float(filter_size - 1) / 2.0f))){};
 
   template <typename T>
   float DoFilter(const T* image_ptr, Position position, std::size_t image_width,
@@ -23,7 +23,7 @@ class Filter : public FloatImage {
 
 class FilterFactory {
  public:
-  static Filter CreateGaussianFilter(std::size_t filter_size, float sigma);
+  //static Filter CreateGaussianFilter(std::size_t filter_size, float sigma);
   static Filter PrewittXFilter();
   static Filter PrewittYFilter();
   static Filter SobelXFilter();

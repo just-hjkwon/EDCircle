@@ -66,5 +66,7 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/image/float_image.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/filters.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/filters.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/filter.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/filter.h"
 )
 
