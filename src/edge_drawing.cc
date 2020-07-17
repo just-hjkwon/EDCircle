@@ -22,6 +22,10 @@ void EdgeDrawing::DetectEdge(GrayImage& image) {
   ConnectingAnchors();
 }
 
+std::list<EdgeSegment> EdgeDrawing::edge_segments() {
+  return edge_segments_;
+}
+
 void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
   Filter::Sobel(image, gx_, gy_, magnitude_);
 

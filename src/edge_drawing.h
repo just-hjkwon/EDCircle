@@ -25,6 +25,7 @@ class EdgeDrawing {
 
  public:
   void DetectEdge(GrayImage& image);
+  std::list<EdgeSegment> edge_segments();
 
  protected:
   void PrepareEdgeMap(GrayImage& image);
