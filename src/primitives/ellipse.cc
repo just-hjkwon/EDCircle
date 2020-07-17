@@ -66,6 +66,12 @@ void Ellipse::Draw(cv::Mat& image, cv::Scalar color) const {
               angle_ / M_PI * 180.0f, 0.0, 360.0, color, 2);
 }
 
+float Ellipse::angle() const { return angle_; }
+
+float Ellipse::major_length() const { return axis_lengths_[0]; }
+
+float Ellipse::minor_length() const { return axis_lengths_[1]; }
+
 Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   std::vector<cv::Point2f> points;
   for (const auto& e : edge_segment) {

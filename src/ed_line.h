@@ -2,7 +2,7 @@
 #define ED_LINE_H_
 
 #include "edpf.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 #include "primitives/line.h"
 
 class EDLine : public EDPF {
@@ -10,7 +10,9 @@ class EDLine : public EDPF {
   EDLine();
 
  public:
-  void DetectLine(GrayImage& image);
+  void DetectLine(GrayImage &image);
+
+  std::list<Line> lines();
 
  protected:
   void ExtractLine();
@@ -18,8 +20,8 @@ class EDLine : public EDPF {
 
   bool isValidLineSegment(const Line &line);
 
- public:
-  std::vector<Line> lines_;
+ protected:
+  std::list<Line> lines_;
 
   float getSegmentNFA(int segment_length, int aligned_count);
 

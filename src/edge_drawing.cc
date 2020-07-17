@@ -1,57 +1,61 @@
 #include "edge_drawing.h"
 
-#include "image/filters.h"
+#include "image/filter.h"
+#include "util.h"
 
 EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
                          int anchor_extraction_interval)
     : magnitude_threshold_(magnitude_threshold),
       anchor_threshold_(anchor_threshold),
-      anchor_extraction_interval_(anchor_extraction_interval) {}
+      anchor_extraction_interval_(anchor_extraction_interval),
+      gx_(0, 0),
+      gy_(0, 0),
+      magnitude_(0, 0),
+      direction_map_(0, 0),
+      edge_map_(0, 0),
+      verbose_(false) {}
+
+void EdgeDrawing::set_verbose(bool verbose) { verbose_ = verbose; }
 
 void EdgeDrawing::DetectEdge(GrayImage& image) {
   width_ = image.width();
   height_ = image.height();
 
+  std::chrono::system_clock::time_point start;
+  std::chrono::duration<double> elapsed_time;
+
+  STOPWATCHSTART(verbose_)
   PrepareEdgeMap(image);
+  STOPWATCHSTOP(verbose_, "EdgeDrawing::PrepareEdgeMap - ")
+
+  STOPWATCHSTART(verbose_)
   ExtractAnchor();
+  STOPWATCHSTOP(verbose_, "EdgeDrawing::ExtractAnchor - ")
+
+  STOPWATCHSTART(verbose_)
   ConnectingAnchors();
+  STOPWATCHSTOP(verbose_, "EdgeDrawing::ConnectingAnchors - ")
 }
 
+std::list<EdgeSegment> EdgeDrawing::edge_segments() { return edge_segments_; }
+
 void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
-  Filter edge_x_filter = FilterFactory::SobelXFilter();
-  Filter edge_y_filter = FilterFactory::SobelYFilter();
+  Filter::Sobel(image, gx_, gy_, magnitude_);
 
-  FloatImage x_gradient = image.MakeFloatFilteredImage(edge_x_filter);
-  FloatImage y_gradient = image.MakeFloatFilteredImage(edge_y_filter);
+  int image_width = image.width();
+  int image_height = image.height();
 
-  x_gradient_ =
-      std::make_shared<FloatImage>(width_, height_, x_gradient.buffer());
-  y_gradient_ =
-      std::make_shared<FloatImage>(width_, height_, y_gradient.buffer());
+  direction_map_.Reset(image_width, image_height);
 
-  std::size_t width = image.width();
-  std::size_t height = image.height();
-
-  std::vector<float> magnitude(width * height);
-  std::vector<unsigned char> direction(width * height);
-
-  for (auto y = 0; y < height; ++y) {
+  for (auto y = 1; y < image_height; ++y) {
     std::size_t offset = get_offset(Position(0, y));
 
-    auto x_ptr = x_gradient.buffer() + offset;
-    auto y_ptr = y_gradient.buffer() + offset;
+    auto x_ptr = gx_.buffer() + offset;
+    auto y_ptr = gy_.buffer() + offset;
 
-    auto magnitude_ptr = magnitude.data() + offset;
-    auto direction_ptr = direction.data() + offset;
+    auto direction_ptr = direction_map_.buffer() + offset;
 
-    for (auto x = 0; x < width; ++x) {
-      float magnitude = sqrt((x_ptr[x] * x_ptr[x]) + (y_ptr[x] * y_ptr[x]));
-      if (magnitude > magnitude_threshold_) {
-        magnitude_ptr[x] = magnitude;
-      } else {
-        magnitude_ptr[x] = 0.0f;
-      }
-
+    for (auto x = 1; x < image_width; ++x) {
       if (abs(x_ptr[x]) >= abs(y_ptr[x])) {
         direction_ptr[x] = (unsigned char)EdgeDirection::VerticalEdge;
       } else {
@@ -59,22 +63,17 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
       }
     }
   }
-
-  magnitude_ = std::make_shared<FloatImage>(width, height, magnitude.data());
-  direction_map_ =
-      std::make_shared<Image<unsigned char>>(width, height, direction.data());
 }
 
 void EdgeDrawing::ExtractAnchor() {
   anchors_.clear();
-  anchors_.reserve(width_ * height_);
 
   int x_start = std::max(1, anchor_extraction_interval_ / 2);
   int y_start = std::max(1, anchor_extraction_interval_ / 2);
 
   for (auto y = y_start; y < height_ - 1; y += anchor_extraction_interval_) {
-    auto direction_map_ptr = direction_map_->buffer() + (y * width_);
-    auto magnitude_ptr = magnitude_->buffer() + (y * width_);
+    auto direction_map_ptr = direction_map_.buffer() + (y * width_);
+    auto magnitude_ptr = magnitude_.buffer() + (y * width_);
 
     for (auto x = x_start; x < width_ - 1; x += anchor_extraction_interval_) {
       float magnitude = magnitude_ptr[x];
@@ -97,14 +96,12 @@ void EdgeDrawing::ExtractAnchor() {
       }
     }
   }
-
-  anchors_.shrink_to_fit();
 }
 
 void EdgeDrawing::ConnectingAnchors() {
-  edge_map_ = std::make_shared<Image<unsigned char>>(width_, height_, nullptr);
+  edge_map_.Reset(width_, height_);
 
-  auto direction_map_ptr = direction_map_->buffer();
+  auto direction_map_ptr = direction_map_.buffer();
 
   edge_segments_.clear();
 
@@ -252,31 +249,31 @@ Position EdgeDrawing::FindNextConnectingPosition(Position position,
 
 float EdgeDrawing::magnitudeAt(Position position) {
   std::size_t offset = get_offset(position);
-  return magnitude_->buffer()[offset];
+  return magnitude_.buffer()[offset];
 }
 
 EdgeDirection EdgeDrawing::directionAt(Position position) {
   std::size_t offset = get_offset(position);
-  return (EdgeDirection)(direction_map_->buffer()[offset]);
+  return (EdgeDirection)(direction_map_.buffer()[offset]);
 }
 
 void EdgeDrawing::set_direction(Position position, EdgeDirection direction) {
   std::size_t offset = get_offset(position);
-  direction_map_->buffer()[offset] = (unsigned char)direction;
+  direction_map_.buffer()[offset] = (unsigned char)direction;
 }
 
 void EdgeDrawing::set_edge(Position position, bool value) {
   std::size_t offset = get_offset(position);
   if (value == true) {
-    edge_map_->buffer()[offset] = 1;
+    edge_map_.buffer()[offset] = 1;
   } else {
-    edge_map_->buffer()[offset] = 0;
+    edge_map_.buffer()[offset] = 0;
   }
 }
 
 inline bool EdgeDrawing::is_edge(Position position) {
   std::size_t offset = get_offset(position);
-  if (edge_map_->buffer()[offset] == 1) {
+  if (edge_map_.buffer()[offset] == 1) {
     return true;
   } else {
     return false;
@@ -288,7 +285,8 @@ std::size_t EdgeDrawing::get_offset(Position position) {
 }
 
 bool EdgeDrawing::isValidPosition(Position position) {
-  if (position.x < 0 || position.x >= width_ || position.y < 0 || position.y >= height_) {
+  if (position.x < 0 || position.x >= width_ || position.y < 0 ||
+      position.y >= height_) {
     return false;
   } else {
     return true;

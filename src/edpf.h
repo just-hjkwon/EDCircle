@@ -4,7 +4,7 @@
 #include <map>
 
 #include "edge_drawing.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 
 class EDPF : public EdgeDrawing {
  public:

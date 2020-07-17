@@ -2,7 +2,7 @@
 #define ED_CIRCLE_H_
 
 #include "ed_line.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 #include "primitives/arc.h"
 #include "primitives/circle.h"
 #include "primitives/ellipse.h"
@@ -14,6 +14,11 @@ class EDCircle : public EDLine {
  public:
   void DetectCircle(GrayImage& image);
 
+  std::list<Circle> circles();
+  std::list<Ellipse> ellipses();
+  std::list<Arc> arcs();
+  std::list<Arc> extended_arcs();
+
  protected:
   void DetectCircleAndEllipseFromClosedEdgeSegment();
   void ExtractArcs();
@@ -22,19 +27,18 @@ class EDCircle : public EDLine {
   void ExtendArcsAndDetectCircle();
   void ExtendArcsAndDetectEllipse();
   void ValidateCircleAndEllipse();
-  bool isValidCircle(const Circle &circle);
+  bool isValidCircle(const Circle& circle);
   bool isValidEllipse(const Ellipse& ellipse);
-  
 
   float getCircleNFA(int circumference_length, int aligned_count);
 
  protected:
- public:
   std::shared_ptr<GrayImage> image_;
 
-  std::vector<Circle> circles_;
-  std::vector<Ellipse> ellipses_;
-  std::vector<Arc> arcs_;
+  std::list<Circle> circles_;
+  std::list<Ellipse> ellipses_;
+  std::list<Arc> arcs_;
+  std::list<Arc> extended_arcs_;
 
   float circle_fitting_error_threshold_;
   float ellipse_fitting_error_threshold_;

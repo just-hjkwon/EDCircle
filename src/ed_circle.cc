@@ -1,13 +1,11 @@
 #include "ed_circle.h"
 
-#include <chrono>
-#include <iostream>
-
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "primitives/circle.h"
 #include "primitives/line.h"
+#include "util.h"
 
 EDCircle::EDCircle() {
   circle_fitting_error_threshold_ = 1.5f;
@@ -21,50 +19,37 @@ void EDCircle::DetectCircle(GrayImage& image) {
   image_ = std::make_shared<GrayImage>(image.width(), image.height(),
                                        image.buffer());
 
-  std::chrono::system_clock::time_point start;
-  std::chrono::duration<double> sec;
-
-  start = std::chrono::system_clock::now();
   DetectEdge(image);
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::DetectEdge Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   DetectCircleAndEllipseFromClosedEdgeSegment();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout
-      << "EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment Elapsed time: "
-      << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_,
+                "EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtractArcs();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ExtractArcs "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ExtractArcs - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtendArcsAndDetectCircle();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ExtendArcsAndDetectCircle "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ExtendArcsAndDetectCircle - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtendArcsAndDetectEllipse();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ExtendArcsAndDetectEllipse "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ExtendArcsAndDetectEllipse - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ValidateCircleAndEllipse();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ValidateCircleAndEllipse "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ValidateCircleAndEllipse - ")
 }
+
+std::list<Circle> EDCircle::circles() { return circles_; }
+
+std::list<Ellipse> EDCircle::ellipses() { return ellipses_; }
+
+std::list<Arc> EDCircle::arcs() { return arcs_; }
+
+std::list<Arc> EDCircle::extended_arcs() { return extended_arcs_; }
 
 void EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment() {
   circles_.clear();
@@ -183,23 +168,25 @@ std::vector<std::vector<Line>> EDCircle::ExtractArcCandidates(
 void EDCircle::ExtendArcsAndDetectCircle() {
   const float kThresholdRatio = 0.25f;
 
-  std::sort(arcs_.begin(), arcs_.end(),
-            [](const Arc& a, const Arc& b) { return a.length() > b.length(); });
+  std::list<Arc> candidates;
+  candidates.insert(candidates.end(), arcs_.begin(), arcs_.end());
+  candidates.sort(
+      [](const Arc& a, const Arc& b) { return a.length() > b.length(); });
 
-  std::vector<Arc> extended_arcs;
+  std::list<Arc> extended_arcs;
 
-  while (arcs_.empty() != true) {
-    Arc target_arc = arcs_.front();
+  while (candidates.empty() != true) {
+    Arc target_arc = candidates.front();
 
     PositionF target_center = target_arc.fitted_circle().get_center();
     float target_radius = target_arc.fitted_circle().get_radius();
     float threashold = target_radius * kThresholdRatio;
 
-    arcs_.erase(arcs_.begin());
+    candidates.pop_front();
 
-    std::vector<Arc> extended_candidates;
+    std::list<Arc> extended_candidates;
 
-    for (auto& it = arcs_.begin(); it != arcs_.end();) {
+    for (auto& it = candidates.begin(); it != candidates.end();) {
       PositionF center = it->fitted_circle().get_center();
       float radius = it->fitted_circle().get_radius();
       float center_distance = target_center.DistanceWith(center);
@@ -207,23 +194,21 @@ void EDCircle::ExtendArcsAndDetectCircle() {
       if (abs(radius - target_radius) <= threashold &&
           center_distance <= threashold) {
         extended_candidates.push_back(*it);
-        it = arcs_.erase(it);
+        it = candidates.erase(it);
         continue;
       }
       it++;
     }
 
-    std::sort(
-        extended_candidates.begin(), extended_candidates.end(),
-        [target_arc](const Arc& a, const Arc& b) {
-          float distance_a = a.ComputeNearestDistanceWithEndPoint(target_arc);
-          float distance_b = b.ComputeNearestDistanceWithEndPoint(target_arc);
+    extended_candidates.sort([target_arc](const Arc& a, const Arc& b) {
+      float distance_a = a.ComputeNearestDistanceWithEndPoint(target_arc);
+      float distance_b = b.ComputeNearestDistanceWithEndPoint(target_arc);
 
-          return distance_a < distance_b;
-        });
+      return distance_a < distance_b;
+    });
 
     auto extended_lines = target_arc.lines();
-    int extended_count = 0;
+    bool is_extended = false;
 
     for (auto it = extended_candidates.begin();
          it != extended_candidates.end();) {
@@ -238,7 +223,7 @@ void EDCircle::ExtendArcsAndDetectCircle() {
         extended_lines = new_lines;
 
         it = extended_candidates.erase(it);
-        extended_count++;
+        is_extended = true;
 
         continue;
       }
@@ -246,11 +231,12 @@ void EDCircle::ExtendArcsAndDetectCircle() {
       it++;
     }
 
-    if (extended_count > 0) {
+    if (is_extended == true) {
       Arc arc(extended_lines);
 
       float length = arc.length();
       float circumference = 2.0f * arc.fitted_circle().get_radius() * M_PI;
+
       if (length > circumference * 0.5f) {
         circles_.push_back(arc.fitted_circle());
       } else {
@@ -258,6 +244,7 @@ void EDCircle::ExtendArcsAndDetectCircle() {
       }
     } else {
       Arc arc(extended_lines);
+
       if (arc.fitted_circle().fitting_error() <= 1.5f) {
         float length = arc.length();
         float circumference = 2.0f * arc.fitted_circle().get_radius() * M_PI;
@@ -270,33 +257,36 @@ void EDCircle::ExtendArcsAndDetectCircle() {
       }
     }
 
-    arcs_.insert(arcs_.end(), extended_candidates.begin(),
-                 extended_candidates.end());
+    candidates.insert(candidates.end(), extended_candidates.begin(),
+                      extended_candidates.end());
   }
 
-  arcs_ = extended_arcs;
+  extended_arcs_ = extended_arcs;
 }
 
 void EDCircle::ExtendArcsAndDetectEllipse() {
   const float kThresholdRatio = 0.5f;
 
-  std::sort(arcs_.begin(), arcs_.end(),
-            [](const Arc& a, const Arc& b) { return a.length() > b.length(); });
+  std::list<Arc> candidates;
+  candidates.insert(candidates.end(), extended_arcs_.begin(),
+                    extended_arcs_.end());
+  candidates.sort(
+      [](const Arc& a, const Arc& b) { return a.length() > b.length(); });
 
-  std::vector<Arc> extended_arcs;
+  std::list<Arc> extended_arcs;
 
-  while (arcs_.empty() != true) {
-    Arc target_arc = arcs_.front();
+  while (candidates.empty() != true) {
+    Arc target_arc = candidates.front();
 
     PositionF target_center = target_arc.fitted_circle().get_center();
     float target_radius = target_arc.fitted_circle().get_radius();
     float threashold = target_radius * kThresholdRatio;
 
-    arcs_.erase(arcs_.begin());
+    candidates.pop_front();
 
-    std::vector<Arc> extended_candidates;
+    std::list<Arc> extended_candidates;
 
-    for (auto& it = arcs_.begin(); it != arcs_.end();) {
+    for (auto& it = candidates.begin(); it != candidates.end();) {
       PositionF center = it->fitted_circle().get_center();
       float radius = it->fitted_circle().get_radius();
       float center_distance = target_center.DistanceWith(center);
@@ -304,20 +294,18 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
       if (abs(radius - target_radius) <= threashold &&
           center_distance <= threashold) {
         extended_candidates.push_back(*it);
-        it = arcs_.erase(it);
+        it = candidates.erase(it);
         continue;
       }
       it++;
     }
 
-    std::sort(
-        extended_candidates.begin(), extended_candidates.end(),
-        [target_arc](const Arc& a, const Arc& b) {
-          float distance_a = a.ComputeNearestDistanceWithEndPoint(target_arc);
-          float distance_b = b.ComputeNearestDistanceWithEndPoint(target_arc);
+    extended_candidates.sort([target_arc](const Arc& a, const Arc& b) {
+      float distance_a = a.ComputeNearestDistanceWithEndPoint(target_arc);
+      float distance_b = b.ComputeNearestDistanceWithEndPoint(target_arc);
 
-          return distance_a < distance_b;
-        });
+      return distance_a < distance_b;
+    });
 
     auto extended_lines = target_arc.lines();
     int extended_count = 0;
@@ -373,17 +361,17 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
       }
     }
 
-    arcs_.insert(arcs_.end(), extended_candidates.begin(),
-                 extended_candidates.end());
+    candidates.insert(candidates.end(), extended_candidates.begin(),
+                      extended_candidates.end());
   }
 
-  arcs_ = extended_arcs;
+  extended_arcs_ = extended_arcs;
 }
 
 void EDCircle::ValidateCircleAndEllipse() {
-  std::vector<Circle> circles;
+  std::list<Circle> circles;
 
-  for (const auto &c : circles_) {
+  for (const auto& c : circles_) {
     if (isValidCircle(c) == true) {
       circles.push_back(c);
     }
@@ -391,9 +379,9 @@ void EDCircle::ValidateCircleAndEllipse() {
 
   circles_ = circles;
 
-  std::vector<Ellipse> ellipses;
+  std::list<Ellipse> ellipses;
 
-  for (const auto &e : ellipses_) {
+  for (const auto& e : ellipses_) {
     if (isValidEllipse(e) == true) {
       ellipses.push_back(e);
     }
@@ -412,7 +400,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
   Position prev_p(-1, -1);
   for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
     Position p = circle.get_positionAt(degree);
-    if (p.x < 0 || p.x >= width_ - 1 || p.y < 0 || p.y >= height_ - 1) {
+    if (isValidPosition(p) == false) {
       continue;
     }
 
@@ -473,6 +461,10 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   Position prev_p(-1, -1);
   for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
     Position p = ellipse.get_positionAt(degree);
+    if (isValidPosition(p) == false) {
+      continue;
+    }
+
     if (p.x != prev_p.x && p.y != prev_p.y) {
       positions.push_back(p);
       prev_p = p;
@@ -498,12 +490,15 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
     float gy = (p10 - p00 + p11 - p01) / 2.0f;
 
     PositionF point_vector(p.x - center.x, p.y - center.y);
-    float angle = atan2(point_vector.y, point_vector.x);
+    float level_line_angle = atan2(point_vector.y, point_vector.x);
+    float ellipse_angle = ellipse.angle();
 
-    float new_aspect_x = cos(angle - ellipse.angle_) / ellipse.axis_lengths_[0];
-    float new_aspect_y = sin(angle - ellipse.angle_) / ellipse.axis_lengths_[1];
+    float new_aspect_x =
+        cos(level_line_angle - ellipse_angle) / ellipse.major_length();
+    float new_aspect_y =
+        sin(level_line_angle - ellipse_angle) / ellipse.minor_length();
 
-    float level_line_angle = atan2(new_aspect_y, new_aspect_x) + ellipse.angle_;
+    level_line_angle = atan2(new_aspect_y, new_aspect_x) + ellipse_angle;
 
     float tangent1 = atan2(gy, gx);
     float tangent2 = atan2(-gy, -gx);
@@ -560,10 +555,10 @@ void EDCircle::ExtractArcs() {
 
   arcs_.clear();
 
-  std::vector<Line> lines;
-
   for (const auto& edge : edge_segments_) {
     std::vector<Line> lines = ExtractLineSegments(edge);
+    lines_.insert(lines_.end(), lines.begin(), lines.end());
+
     std::vector<std::vector<Line>> arc_candidates = ExtractArcCandidates(lines);
 
     for (const auto& candidate : arc_candidates) {

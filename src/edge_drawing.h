@@ -3,8 +3,7 @@
 
 #include <memory>
 
-#include "image/float_image.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 #include "primitives/edge_segment.h"
 
 enum class EdgeDirection : unsigned char {
@@ -25,7 +24,9 @@ class EdgeDrawing {
               int anchor_extraction_interval);
 
  public:
+  void set_verbose(bool verbose);
   void DetectEdge(GrayImage& image);
+  std::list<EdgeSegment> edge_segments();
 
  protected:
   void PrepareEdgeMap(GrayImage& image);
@@ -53,15 +54,16 @@ class EdgeDrawing {
   int anchor_extraction_interval_;
 
  protected:
-  std::shared_ptr<FloatImage> x_gradient_;
-  std::shared_ptr<FloatImage> y_gradient_;
-  std::shared_ptr<FloatImage> magnitude_;
-  std::shared_ptr<Image<unsigned char>> direction_map_;
+  IntImage gx_;
+  IntImage gy_;
+  FloatImage magnitude_;
+  Image<unsigned char> direction_map_;
 
-  std::vector<Edgel> anchors_;
-  std::shared_ptr<Image<unsigned char>> edge_map_;
-
+  std::list<Edgel> anchors_;
+  Image<unsigned char> edge_map_;
   std::list<EdgeSegment> edge_segments_;
+
+  bool verbose_ = false;
 };
 
 #endif

@@ -1,8 +1,8 @@
 #include "edpf.h"
 
 #include <algorithm>
-#include <chrono>
-#include <iostream>
+
+#include "util.h"
 
 EDPF::EDPF() : EdgeDrawing(EDPF::GradientThreshold(), 0.0f, 1) {}
 
@@ -10,51 +10,35 @@ void EDPF::DetectEdge(GrayImage &image) {
   width_ = image.width();
   height_ = image.height();
 
-  std::chrono::system_clock::time_point start;
-  std::chrono::duration<double> sec;
-
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   PrepareEdgeMap(image);
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::PrepareEdgeMap Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::PrepareEdgeMap - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtractAnchor();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::ExtractAnchor Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::ExtractAnchor - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   SortAnchors();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::SortAnchors Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::SortAnchors - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ConnectingAnchors();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::ConnectingAnchors Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::ConnectingAnchors - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   PrepareNFA();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::PrepareNFA Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::PrepareNFA - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ValidateSegments();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::ValidateSegments Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::ValidateSegments - ")
 }
 
 void EDPF::SortAnchors() {
-  std::sort(anchors_.begin(), anchors_.end(),
-            [=](const Edgel &a, const Edgel &b) -> bool {
-              return a.magnitude > b.magnitude;
-            });
+  anchors_.sort([=](const Edgel &a, const Edgel &b) -> bool {
+    return a.magnitude > b.magnitude;
+  });
 }
 
 void EDPF::PrepareNFA() {
@@ -66,8 +50,8 @@ void EDPF::PrepareNFA() {
   start = std::chrono::system_clock::now();
 
   std::vector<float> magnitudes;
-  magnitudes.insert(magnitudes.end(), magnitude_->buffer(),
-                    magnitude_->buffer() + width_ * height_);
+  magnitudes.insert(magnitudes.end(), magnitude_.buffer(),
+                    magnitude_.buffer() + width_ * height_);
 
   std::sort(magnitudes.begin(), magnitudes.end());
 
@@ -90,25 +74,28 @@ void EDPF::PrepareNFA() {
   }
   int count = magnitudes.size() - zero_count;
 
-  std::sort(magnitude_cumulative_distribution_.begin(), magnitude_cumulative_distribution_.end(),
+  std::sort(magnitude_cumulative_distribution_.begin(),
+            magnitude_cumulative_distribution_.end(),
             [](const std::pair<float, float> &a,
                const std::pair<float, float> &b) { return a.first > b.first; });
 
-  magnitude_cumulative_distribution_[0].second /= float(count);
-  magnitude_cumulative_distribution_table_.insert(
-      std::make_pair(magnitude_cumulative_distribution_[0].first,
-                     magnitude_cumulative_distribution_[0].second));
-  for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
-    magnitude_cumulative_distribution_[i].second =
-        magnitude_cumulative_distribution_[i - 1].second +
-        (magnitude_cumulative_distribution_[i].second / float(count));
+  if (magnitude_cumulative_distribution_.size() > 0) {
+    magnitude_cumulative_distribution_[0].second /= float(count);
+    magnitude_cumulative_distribution_table_.insert(
+        std::make_pair(magnitude_cumulative_distribution_[0].first,
+                       magnitude_cumulative_distribution_[0].second));
+    for (int i = 1; i < magnitude_cumulative_distribution_.size(); ++i) {
+      magnitude_cumulative_distribution_[i].second =
+          magnitude_cumulative_distribution_[i - 1].second +
+          (magnitude_cumulative_distribution_[i].second / float(count));
 
       magnitude_cumulative_distribution_table_.insert(
-        std::make_pair(magnitude_cumulative_distribution_[i].first,
-                       magnitude_cumulative_distribution_[i].second));
-  }
+          std::make_pair(magnitude_cumulative_distribution_[i].first,
+                         magnitude_cumulative_distribution_[i].second));
+    }
 
-  magnitude_cumulative_distribution_.shrink_to_fit();
+    magnitude_cumulative_distribution_.shrink_to_fit();
+  }
 
   N_p = 0;
   for (const auto &segment : edge_segments_) {

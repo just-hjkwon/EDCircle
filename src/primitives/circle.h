@@ -23,7 +23,7 @@ class Circle {
   static Circle FitFromEdgeSegment(const EdgeSegment &edge_segment);
   static Circle FitFromEdgeSegment(const std::vector<Line> &lines);
 
- public:
+ protected:
   float parameters_[3] = {0.0f, 0.0f, 0.0f};
   float fitting_error_ = 0.0f;
 };

@@ -49,6 +49,8 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_line.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_circle.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_circle.h"	
+	"${CMAKE_CURRENT_SOURCE_DIR}/util.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/util.h"	
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/line.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/line.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/edge_segment.h"
@@ -60,11 +62,7 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/arc.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/arc.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/image/image.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image/gray_image.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image/gray_image.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image/float_image.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image/float_image.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image/filters.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image/filters.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/filter.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image/filter.h"
 )
 

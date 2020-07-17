@@ -73,7 +73,7 @@ void Line::Draw(cv::Mat& image, cv::Scalar color) const {
   Position b = begin();
   Position e = end();
 
-  cv::line(image, cv::Point(b.x, b.y), cv::Point(e.x, e.y), color);
+  cv::line(image, cv::Point(b.x, b.y), cv::Point(e.x, e.y), color, 2, cv::LINE_AA);
 }
 
 Line Line::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
