@@ -1,5 +1,3 @@
-#include "main.h"
-
 #include <chrono>
 #include <iostream>
 #include <opencv2/highgui.hpp>
@@ -9,7 +7,7 @@
 #include "ed_line.h"
 #include "edge_drawing.h"
 #include "edpf.h"
-#include "image/filters.h"
+#include "image/filter.h"
 #include "image/gray_image.h"
 #include "primitives/circle.h"
 
@@ -81,13 +79,14 @@ void print_invalid_input_file(std::string filename) {
 }
 
 Config parse_args(int argc, char *argv[]) {
-  if (argc >= 3) {
-    return Config{"", false, true};
+  if (argc < 3) {
+    Config config{"", false, true};
+    return config;
   }
 
   bool video_mode = false;
   std::string filename;
-  bool error = true;
+  bool error = false;
   bool display_info = false;
 
   for (int i = 1; i < argc; i++) {
@@ -130,9 +129,9 @@ void DetectCircle(cv::Mat &cv_image) {
   }
 
   GrayImage image = GrayImage::FromMat(cv_gray_image);
-  Filter gaussian_filter = FilterFactory::CreateGaussianFilter(5, 1.0);
-  image.ApplyFilter(gaussian_filter);
+  GrayImage gaussian_filtered(image.width(), image.height());
+  Filter::Gaussian(image, gaussian_filtered, 5, 1.0);
 
   EDCircle ed_circle;
-  ed_circle.DetectCircle(image);
+  ed_circle.DetectCircle(gaussian_filtered);
 }

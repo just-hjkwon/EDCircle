@@ -412,7 +412,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
   Position prev_p(-1, -1);
   for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
     Position p = circle.get_positionAt(degree);
-    if (p.x < 0 || p.x >= width_ - 1 || p.y < 0 || p.y >= height_ - 1) {
+    if (isValidPosition(p) == false) {
       continue;
     }
 
@@ -473,6 +473,10 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   Position prev_p(-1, -1);
   for (float degree = 0.0f; degree < 360.0f; degree += degree_step) {
     Position p = ellipse.get_positionAt(degree);
+    if (isValidPosition(p) == false) {
+      continue;
+    }
+
     if (p.x != prev_p.x && p.y != prev_p.y) {
       positions.push_back(p);
       prev_p = p;

@@ -1,6 +1,6 @@
 #include "edge_drawing.h"
 
-#include "image/filters.h"
+#include "image/filter.h"
 
 EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
                          int anchor_extraction_interval)
@@ -18,40 +18,25 @@ void EdgeDrawing::DetectEdge(GrayImage& image) {
 }
 
 void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
-  Filter edge_x_filter = FilterFactory::SobelXFilter();
-  Filter edge_y_filter = FilterFactory::SobelYFilter();
+  IntImage gx(image.width(), image.height());
+  IntImage gy(image.width(), image.height());
+  FloatImage magnitude(image.width(), image.height());
+  Filter::Sobel(image, gx, gy, magnitude);
 
-  FloatImage x_gradient = image.MakeFloatFilteredImage(edge_x_filter);
-  FloatImage y_gradient = image.MakeFloatFilteredImage(edge_y_filter);
+  int image_width = image.width();
+  int image_height = image.height();
 
-  x_gradient_ =
-      std::make_shared<FloatImage>(width_, height_, x_gradient.buffer());
-  y_gradient_ =
-      std::make_shared<FloatImage>(width_, height_, y_gradient.buffer());
+  std::vector<unsigned char> direction(image_width * image_height);
 
-  std::size_t width = image.width();
-  std::size_t height = image.height();
-
-  std::vector<float> magnitude(width * height);
-  std::vector<unsigned char> direction(width * height);
-
-  for (auto y = 0; y < height; ++y) {
+  for (auto y = 1; y < image_height; ++y) {
     std::size_t offset = get_offset(Position(0, y));
 
-    auto x_ptr = x_gradient.buffer() + offset;
-    auto y_ptr = y_gradient.buffer() + offset;
+    auto x_ptr = gx.buffer() + offset;
+    auto y_ptr = gy.buffer() + offset;
 
-    auto magnitude_ptr = magnitude.data() + offset;
     auto direction_ptr = direction.data() + offset;
 
-    for (auto x = 0; x < width; ++x) {
-      float magnitude = sqrt((x_ptr[x] * x_ptr[x]) + (y_ptr[x] * y_ptr[x]));
-      if (magnitude > magnitude_threshold_) {
-        magnitude_ptr[x] = magnitude;
-      } else {
-        magnitude_ptr[x] = 0.0f;
-      }
-
+    for (auto x = 1; x < image_width; ++x) {
       if (abs(x_ptr[x]) >= abs(y_ptr[x])) {
         direction_ptr[x] = (unsigned char)EdgeDirection::VerticalEdge;
       } else {
@@ -60,9 +45,10 @@ void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
     }
   }
 
-  magnitude_ = std::make_shared<FloatImage>(width, height, magnitude.data());
-  direction_map_ =
-      std::make_shared<Image<unsigned char>>(width, height, direction.data());
+  magnitude_ = std::make_shared<FloatImage>(image_width, image_height,
+                                            magnitude.buffer());
+  direction_map_ = std::make_shared<Image<unsigned char>>(
+      image_width, image_height, direction.data());
 }
 
 void EdgeDrawing::ExtractAnchor() {
@@ -288,7 +274,8 @@ std::size_t EdgeDrawing::get_offset(Position position) {
 }
 
 bool EdgeDrawing::isValidPosition(Position position) {
-  if (position.x < 0 || position.x >= width_ || position.y < 0 || position.y >= height_) {
+  if (position.x < 0 || position.x >= width_ || position.y < 0 ||
+      position.y >= height_) {
     return false;
   } else {
     return true;
