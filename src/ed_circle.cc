@@ -1,13 +1,11 @@
 #include "ed_circle.h"
 
-#include <chrono>
-#include <iostream>
-
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "primitives/circle.h"
 #include "primitives/line.h"
+#include "util.h"
 
 EDCircle::EDCircle() {
   circle_fitting_error_threshold_ = 1.5f;
@@ -21,49 +19,28 @@ void EDCircle::DetectCircle(GrayImage& image) {
   image_ = std::make_shared<GrayImage>(image.width(), image.height(),
                                        image.buffer());
 
-  std::chrono::system_clock::time_point start;
-  std::chrono::duration<double> sec;
-
-  start = std::chrono::system_clock::now();
   DetectEdge(image);
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::DetectEdge Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   DetectCircleAndEllipseFromClosedEdgeSegment();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout
-      << "EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment Elapsed time: "
-      << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_,
+                "EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtractArcs();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ExtractArcs "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ExtractArcs - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtendArcsAndDetectCircle();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ExtendArcsAndDetectCircle "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ExtendArcsAndDetectCircle - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtendArcsAndDetectEllipse();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ExtendArcsAndDetectEllipse "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ExtendArcsAndDetectEllipse - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ValidateCircleAndEllipse();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDCircle::ValidateCircleAndEllipse "
-               "Elapsed time: "
-            << sec.count() * 1000.0f << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDCircle::ValidateCircleAndEllipse - ")
 }
 
 std::list<Circle> EDCircle::circles() { return circles_; }

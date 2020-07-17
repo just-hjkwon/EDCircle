@@ -16,14 +16,14 @@ struct Config {
  public:
   std::string filename;
   bool video_mode;
-  bool display_info;
+  bool verbose;
   bool error;
 };
 
 void print_help();
 void print_invalid_input_file(std::string filename);
 Config parse_args(int argc, char *argv[]);
-void DetectCircle(cv::Mat &cv_image);
+void DetectCircle(cv::Mat &cv_image, bool verbose);
 
 int main(int argc, char *argv[]) {
   Config config = parse_args(argc, argv);
@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
+    std::cout << "Press 'q' to exit." << std::endl;
+
     while (true) {
       cv::Mat frame;
       video.read(frame);
@@ -48,9 +50,8 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      DetectCircle(frame);
+      DetectCircle(frame, config.verbose);
 
-      cv::imshow("EVideo", frame);
       char pressed_key = cv::waitKey(1);
       if (pressed_key == 'q') {
         break;
@@ -63,14 +64,14 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
-    DetectCircle(image);
+    DetectCircle(image, config.verbose);
 
     cv::waitKey(0);
   }
 }
 
 void print_help() {
-  std::cout << "Usage: EDCircle [-v|-i] [video filename|image filename]"
+  std::cout << "Usage: EDCircle [-m|-i] [video filename|image filename]"
             << std::endl;
 }
 
@@ -87,10 +88,10 @@ Config parse_args(int argc, char *argv[]) {
   bool video_mode = false;
   std::string filename;
   bool error = false;
-  bool display_info = false;
+  bool verbose = false;
 
   for (int i = 1; i < argc; i++) {
-    if (std::string("-v").compare(argv[i]) == 0) {
+    if (std::string("-m").compare(argv[i]) == 0) {
       video_mode = true;
       if (i + 1 < argc) {
         filename = argv[i + 1];
@@ -102,8 +103,8 @@ Config parse_args(int argc, char *argv[]) {
         filename = argv[i + 1];
         i++;
       }
-    } else if (std::string("-d").compare(argv[i]) == 0) {
-      display_info = true;
+    } else if (std::string("-v").compare(argv[i]) == 0) {
+      verbose = true;
     } else {
       error = true;
     }
@@ -116,11 +117,11 @@ Config parse_args(int argc, char *argv[]) {
   if (error == true) {
     return Config{"", false, false, true};
   } else {
-    return Config{filename, video_mode, display_info, false};
+    return Config{filename, video_mode, verbose, false};
   }
 }
 
-void DetectCircle(cv::Mat &cv_image) {
+void DetectCircle(cv::Mat &cv_image, bool verbose) {
   cv::Mat cv_gray_image;
   if (cv_image.type() == CV_8UC3) {
     cv::cvtColor(cv_image, cv_gray_image, cv::COLOR_BGR2GRAY);
@@ -130,39 +131,52 @@ void DetectCircle(cv::Mat &cv_image) {
 
   GrayImage image = Util::FromMat(cv_gray_image);
   GrayImage gaussian_filtered(image.width(), image.height());
+  STOPWATCHSTART(verbose)
   Filter::Gaussian(image, gaussian_filtered, 5, 1.0);
+  STOPWATCHSTOP(verbose, "Filter::Gaussian - ")
 
   EDCircle ed_circle;
+  ed_circle.set_verbose(verbose);
   ed_circle.DetectCircle(gaussian_filtered);
 
-  cv::Mat edge_image = cv::Mat::zeros(cv_image.size(), CV_8UC1);
-  cv::Mat lines_image = cv_image.clone();
-  cv::Mat arcs_image = cv_image.clone();
-  cv::Mat extended_arcs_image = cv_image.clone();
+  if (verbose == true) {
+    cv::Mat edge_image = cv::Mat::zeros(cv_image.size(), CV_8UC1);
+    cv::Mat lines_image = cv_image.clone();
+    cv::Mat arcs_image = cv_image.clone();
+    cv::Mat extended_arcs_image = cv_image.clone();
+
+    auto edge_segments = ed_circle.edge_segments();
+    auto lines = ed_circle.lines();
+    auto arcs = ed_circle.arcs();
+    auto extended_arcs = ed_circle.arcs();
+
+    for (auto edge_segment : edge_segments) {
+      edge_segment.Draw(edge_image, cv::Scalar(255, 255, 255));
+    }
+
+    for (auto line : lines) {
+      line.Draw(lines_image, cv::Scalar(255, 255, 0));
+    }
+
+    for (auto arc : arcs) {
+      arc.Draw(arcs_image, cv::Scalar(255, 255, 0));
+    }
+
+    for (auto extended_arc : extended_arcs) {
+      extended_arc.Draw(extended_arcs_image, cv::Scalar(255, 255, 0));
+    }
+
+    cv::imshow("Edge", edge_image);
+    cv::imshow("Lines", lines_image);
+    cv::imshow("Arcs", arcs_image);
+    cv::imshow("Extended arcs", extended_arcs_image);
+  }
+
   cv::Mat circle_and_ellipse_image = cv_image.clone();
 
-  auto edge_segments = ed_circle.edge_segments();
-  auto lines = ed_circle.lines();
-  auto arcs = ed_circle.arcs();
-  auto extended_arcs = ed_circle.arcs();
   auto circles = ed_circle.circles();
   auto ellipses = ed_circle.ellipses();
 
-  for (auto edge_segment : edge_segments) {
-    edge_segment.Draw(edge_image, cv::Scalar(255, 255, 255));
-  }
-  
-  for (auto line : lines) {
-    line.Draw(lines_image, cv::Scalar(255, 255, 0));
-  }
-
-  for (auto arc : arcs) {
-    arc.Draw(arcs_image, cv::Scalar(255, 255, 0));
-  }
-
-  for (auto extended_arc : extended_arcs) {
-    extended_arc.Draw(extended_arcs_image, cv::Scalar(255, 255, 0));
-  }
   for (auto circle : circles) {
     circle.Draw(circle_and_ellipse_image, cv::Scalar(255, 255, 0));
   }
@@ -170,9 +184,5 @@ void DetectCircle(cv::Mat &cv_image) {
     ellipse.Draw(circle_and_ellipse_image, cv::Scalar(0, 255, 255));
   }
 
-  cv::imshow("Edge", edge_image);
-  cv::imshow("Lines", lines_image);
-  cv::imshow("Arcs", arcs_image);
-  cv::imshow("Extended arcs", extended_arcs_image);
   cv::imshow("Circles and Ellipse", circle_and_ellipse_image);
 }

@@ -1,8 +1,8 @@
 #include "edpf.h"
 
 #include <algorithm>
-#include <chrono>
-#include <iostream>
+
+#include "util.h"
 
 EDPF::EDPF() : EdgeDrawing(EDPF::GradientThreshold(), 0.0f, 1) {}
 
@@ -10,44 +10,29 @@ void EDPF::DetectEdge(GrayImage &image) {
   width_ = image.width();
   height_ = image.height();
 
-  std::chrono::system_clock::time_point start;
-  std::chrono::duration<double> sec;
-
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   PrepareEdgeMap(image);
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::PrepareEdgeMap Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::PrepareEdgeMap - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ExtractAnchor();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::ExtractAnchor Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::ExtractAnchor - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   SortAnchors();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::SortAnchors Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::SortAnchors - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ConnectingAnchors();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::ConnectingAnchors Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::ConnectingAnchors - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   PrepareNFA();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::PrepareNFA Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::PrepareNFA - ")
 
-  start = std::chrono::system_clock::now();
+  STOPWATCHSTART(verbose_)
   ValidateSegments();
-  sec = std::chrono::system_clock::now() - start;
-  std::cout << "EDPF::ValidateSegments Elapsed time: " << sec.count() * 1000.0f
-            << " ms" << std::endl;
+  STOPWATCHSTOP(verbose_, "EDPF::ValidateSegments - ")
 }
 
 void EDPF::SortAnchors() {

@@ -24,6 +24,7 @@ class EdgeDrawing {
               int anchor_extraction_interval);
 
  public:
+  void set_verbose(bool verbose);
   void DetectEdge(GrayImage& image);
   std::list<EdgeSegment> edge_segments();
 
@@ -61,6 +62,8 @@ class EdgeDrawing {
   std::list<Edgel> anchors_;
   Image<unsigned char> edge_map_;
   std::list<EdgeSegment> edge_segments_;
+
+  bool verbose_ = false;
 };
 
 #endif

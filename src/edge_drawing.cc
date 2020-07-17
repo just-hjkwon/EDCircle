@@ -1,6 +1,7 @@
 #include "edge_drawing.h"
 
 #include "image/filter.h"
+#include "util.h"
 
 EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
                          int anchor_extraction_interval)
@@ -11,20 +12,32 @@ EdgeDrawing::EdgeDrawing(float magnitude_threshold, float anchor_threshold,
       gy_(0, 0),
       magnitude_(0, 0),
       direction_map_(0, 0),
-      edge_map_(0, 0) {}
+      edge_map_(0, 0),
+      verbose_(false) {}
+
+void EdgeDrawing::set_verbose(bool verbose) { verbose_ = verbose; }
 
 void EdgeDrawing::DetectEdge(GrayImage& image) {
   width_ = image.width();
   height_ = image.height();
 
+  std::chrono::system_clock::time_point start;
+  std::chrono::duration<double> elapsed_time;
+
+  STOPWATCHSTART(verbose_)
   PrepareEdgeMap(image);
+  STOPWATCHSTOP(verbose_, "EdgeDrawing::PrepareEdgeMap - ")
+
+  STOPWATCHSTART(verbose_)
   ExtractAnchor();
+  STOPWATCHSTOP(verbose_, "EdgeDrawing::ExtractAnchor - ")
+
+  STOPWATCHSTART(verbose_)
   ConnectingAnchors();
+  STOPWATCHSTOP(verbose_, "EdgeDrawing::ConnectingAnchors - ")
 }
 
-std::list<EdgeSegment> EdgeDrawing::edge_segments() {
-  return edge_segments_;
-}
+std::list<EdgeSegment> EdgeDrawing::edge_segments() { return edge_segments_; }
 
 void EdgeDrawing::PrepareEdgeMap(GrayImage& image) {
   Filter::Sobel(image, gx_, gy_, magnitude_);

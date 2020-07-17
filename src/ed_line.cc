@@ -5,6 +5,8 @@
 
 #include <opencv2/highgui.hpp>
 
+#include "util.h"
+
 EDLine::EDLine() : EDPF() {
   anchor_threshold_ = 2.0f;
   aligned_degree_treshold_ = M_PI / 8.0f;
@@ -12,8 +14,11 @@ EDLine::EDLine() : EDPF() {
 }
 
 void EDLine::DetectLine(GrayImage &image) {
-  DetectEdge(image);
+  PrepareEdgeMap(image);
+
+  STOPWATCHSTART(verbose_)
   ExtractLine();
+  STOPWATCHSTOP(verbose_, "EDLine::DetectLine - ")
 }
 
 std::list<Line> EDLine::lines() { return lines_; }
