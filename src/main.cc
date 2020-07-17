@@ -8,8 +8,9 @@
 #include "edge_drawing.h"
 #include "edpf.h"
 #include "image/filter.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 #include "primitives/circle.h"
+#include "util.h"
 
 struct Config {
  public:
@@ -128,7 +129,7 @@ void DetectCircle(cv::Mat &cv_image) {
     cv_gray_image = cv_image;
   }
 
-  GrayImage image = GrayImage::FromMat(cv_gray_image);
+  GrayImage image = Util::FromMat(cv_gray_image);
   GrayImage gaussian_filtered(image.width(), image.height());
   Filter::Gaussian(image, gaussian_filtered, 5, 1.0);
 

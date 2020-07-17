@@ -2,7 +2,7 @@
 #define ED_CIRCLE_H_
 
 #include "ed_line.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 #include "primitives/arc.h"
 #include "primitives/circle.h"
 #include "primitives/ellipse.h"
@@ -22,9 +22,8 @@ class EDCircle : public EDLine {
   void ExtendArcsAndDetectCircle();
   void ExtendArcsAndDetectEllipse();
   void ValidateCircleAndEllipse();
-  bool isValidCircle(const Circle &circle);
+  bool isValidCircle(const Circle& circle);
   bool isValidEllipse(const Ellipse& ellipse);
-  
 
   float getCircleNFA(int circumference_length, int aligned_count);
 

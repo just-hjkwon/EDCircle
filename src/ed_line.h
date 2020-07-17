@@ -2,7 +2,7 @@
 #define ED_LINE_H_
 
 #include "edpf.h"
-#include "image/gray_image.h"
+#include "image/image.h"
 #include "primitives/line.h"
 
 class EDLine : public EDPF {
@@ -10,7 +10,7 @@ class EDLine : public EDPF {
   EDLine();
 
  public:
-  void DetectLine(GrayImage& image);
+  void DetectLine(GrayImage &image);
 
  protected:
   void ExtractLine();
