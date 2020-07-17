@@ -19,6 +19,10 @@ class Ellipse {
   float fitting_error() { return fitting_error_; }
   void Draw(cv::Mat &image, cv::Scalar color) const;
 
+  float angle() const;
+  float major_length() const;
+  float minor_length() const;
+
  public:
   static Ellipse FitFromEdgeSegment(const EdgeSegment &edge_segment);
   static Ellipse FitFromEdgeSegment(const std::vector<Line> &lines);
@@ -26,7 +30,7 @@ class Ellipse {
  protected:
   float ComputeError(Position position);
 
- public:
+ protected:
   float parameters_[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
   float cx_ = 0.0f;
   float cy_ = 0.0f;

@@ -28,7 +28,6 @@ class EDCircle : public EDLine {
   float getCircleNFA(int circumference_length, int aligned_count);
 
  protected:
- public:
   std::shared_ptr<GrayImage> image_;
 
   std::vector<Circle> circles_;

@@ -29,7 +29,7 @@ class Line {
  public:
   static Line FitFromEdgeSegment(const EdgeSegment& edge_segment);
 
- public:
+ protected:
   EdgeSegment edge_segment_;
 
   float parameters_[2] = {0.0f, 0.0f};

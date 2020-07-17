@@ -18,7 +18,7 @@ class EDLine : public EDPF {
 
   bool isValidLineSegment(const Line &line);
 
- public:
+ protected:
   std::vector<Line> lines_;
 
   float getSegmentNFA(int segment_length, int aligned_count);

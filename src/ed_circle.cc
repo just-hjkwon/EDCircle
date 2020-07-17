@@ -383,7 +383,7 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
 void EDCircle::ValidateCircleAndEllipse() {
   std::vector<Circle> circles;
 
-  for (const auto &c : circles_) {
+  for (const auto& c : circles_) {
     if (isValidCircle(c) == true) {
       circles.push_back(c);
     }
@@ -393,7 +393,7 @@ void EDCircle::ValidateCircleAndEllipse() {
 
   std::vector<Ellipse> ellipses;
 
-  for (const auto &e : ellipses_) {
+  for (const auto& e : ellipses_) {
     if (isValidEllipse(e) == true) {
       ellipses.push_back(e);
     }
@@ -502,12 +502,15 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
     float gy = (p10 - p00 + p11 - p01) / 2.0f;
 
     PositionF point_vector(p.x - center.x, p.y - center.y);
-    float angle = atan2(point_vector.y, point_vector.x);
+    float level_line_angle = atan2(point_vector.y, point_vector.x);
+    float ellipse_angle = ellipse.angle();
 
-    float new_aspect_x = cos(angle - ellipse.angle_) / ellipse.axis_lengths_[0];
-    float new_aspect_y = sin(angle - ellipse.angle_) / ellipse.axis_lengths_[1];
+    float new_aspect_x =
+        cos(level_line_angle - ellipse_angle) / ellipse.major_length();
+    float new_aspect_y =
+        sin(level_line_angle - ellipse_angle) / ellipse.minor_length();
 
-    float level_line_angle = atan2(new_aspect_y, new_aspect_x) + ellipse.angle_;
+    level_line_angle = atan2(new_aspect_y, new_aspect_x) + ellipse_angle;
 
     float tangent1 = atan2(gy, gx);
     float tangent2 = atan2(-gy, -gx);
