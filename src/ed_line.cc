@@ -16,6 +16,8 @@ void EDLine::DetectLine(GrayImage &image) {
   ExtractLine();
 }
 
+std::list<Line> EDLine::lines() { return lines_; }
+
 bool EDLine::isValidLineSegment(const Line &line) {
   float line_angle = line.get_angle();
 
@@ -97,24 +99,23 @@ void EDLine::ExtractLine() {
   minimum_line_length_ = int(
       round(-4.0f * log(sqrt(float(width_) * float(height_))) / log(0.125f)));
 
-  lines_.clear();
-  lines_.reserve(width_ * height_);
+  std::list<Line> lines;
 
   for (auto &edge_segment : edge_segments_) {
     std::vector<Line> line_segments = ExtractLineSegments(edge_segment);
 
     for (auto &line : line_segments) {
       if (isValidLineSegment(line) == true) {
-        lines_.push_back(line);
+        lines.push_back(line);
       }
     }
   }
 
-  lines_.shrink_to_fit();
+  lines_ = lines;
 }
 
 std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment &edge_segment) {
-  std::vector<Line> lines;
+  std::list<Line> lines;
 
   EdgeSegment::const_iterator line_candidate_begin = edge_segment.begin();
   EdgeSegment::const_iterator line_candidate_end = edge_segment.begin();
@@ -181,5 +182,8 @@ std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment &edge_segment) {
     _segment.insert(_segment.end(), line_candidate_begin, line_candidate_end);
   }
 
-  return lines;
+  std::vector<Line> line_vector;
+  line_vector.insert(line_vector.end(), lines.begin(), lines.end());
+
+  return line_vector;
 }

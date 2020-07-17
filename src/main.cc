@@ -135,14 +135,20 @@ void DetectCircle(cv::Mat &cv_image) {
   EDCircle ed_circle;
   ed_circle.DetectCircle(gaussian_filtered);
 
+  cv::Mat lines_image = cv_image.clone();
   cv::Mat arcs_image = cv_image.clone();
   cv::Mat extended_arcs_image = cv_image.clone();
   cv::Mat circle_and_ellipse_image = cv_image.clone();
 
+  auto lines = ed_circle.lines();
   auto arcs = ed_circle.arcs();
   auto extended_arcs = ed_circle.arcs();
   auto circles = ed_circle.circles();
   auto ellipses = ed_circle.ellipses();
+
+  for (auto line : lines) {
+    line.Draw(lines_image, cv::Scalar(255, 255, 0));
+  }
 
   for (auto arc : arcs) {
     arc.Draw(arcs_image, cv::Scalar(255, 255, 0));
@@ -158,6 +164,7 @@ void DetectCircle(cv::Mat &cv_image) {
     ellipse.Draw(circle_and_ellipse_image, cv::Scalar(255, 255, 0));
   }
 
+  cv::imshow("Lines", lines_image);
   cv::imshow("Arcs", arcs_image);
   cv::imshow("Extended arcs", extended_arcs_image);
   cv::imshow("Circles and Ellipse", circle_and_ellipse_image);

@@ -12,6 +12,8 @@ class EDLine : public EDPF {
  public:
   void DetectLine(GrayImage &image);
 
+  std::list<Line> lines();
+
  protected:
   void ExtractLine();
   std::vector<Line> ExtractLineSegments(const EdgeSegment &segment);
@@ -19,7 +21,7 @@ class EDLine : public EDPF {
   bool isValidLineSegment(const Line &line);
 
  protected:
-  std::vector<Line> lines_;
+  std::list<Line> lines_;
 
   float getSegmentNFA(int segment_length, int aligned_count);
 

@@ -52,8 +52,8 @@ class EdgeDrawing {
   int anchor_extraction_interval_;
 
  protected:
-  std::shared_ptr<FloatImage> x_gradient_;
-  std::shared_ptr<FloatImage> y_gradient_;
+  // std::shared_ptr<FloatImage> x_gradient_;
+  // std::shared_ptr<FloatImage> y_gradient_;
   std::shared_ptr<FloatImage> magnitude_;
   std::shared_ptr<Image<unsigned char>> direction_map_;
 
