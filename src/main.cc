@@ -65,7 +65,6 @@ int main(int argc, char *argv[]) {
 
     DetectCircle(image);
 
-    cv::imshow("Image", image);
     cv::waitKey(0);
   }
 }
@@ -135,4 +134,31 @@ void DetectCircle(cv::Mat &cv_image) {
 
   EDCircle ed_circle;
   ed_circle.DetectCircle(gaussian_filtered);
+
+  cv::Mat arcs_image = cv_image.clone();
+  cv::Mat extended_arcs_image = cv_image.clone();
+  cv::Mat circle_and_ellipse_image = cv_image.clone();
+
+  auto arcs = ed_circle.arcs();
+  auto extended_arcs = ed_circle.arcs();
+  auto circles = ed_circle.circles();
+  auto ellipses = ed_circle.ellipses();
+
+  for (auto arc : arcs) {
+    arc.Draw(arcs_image, cv::Scalar(255, 255, 0));
+  }
+
+  for (auto extended_arc : extended_arcs) {
+    extended_arc.Draw(extended_arcs_image, cv::Scalar(255, 255, 0));
+  }
+  for (auto circle : circles) {
+    circle.Draw(circle_and_ellipse_image, cv::Scalar(255, 255, 0));
+  }
+  for (auto ellipse : ellipses) {
+    ellipse.Draw(circle_and_ellipse_image, cv::Scalar(255, 255, 0));
+  }
+
+  cv::imshow("Arcs", arcs_image);
+  cv::imshow("Extended arcs", extended_arcs_image);
+  cv::imshow("Circles and Ellipse", circle_and_ellipse_image);
 }

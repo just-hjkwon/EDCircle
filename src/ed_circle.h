@@ -14,6 +14,11 @@ class EDCircle : public EDLine {
  public:
   void DetectCircle(GrayImage& image);
 
+  std::list<Circle> circles();
+  std::list<Ellipse> ellipses();
+  std::list<Arc> arcs();
+  std::list<Arc> extended_arcs();
+
  protected:
   void DetectCircleAndEllipseFromClosedEdgeSegment();
   void ExtractArcs();
@@ -30,9 +35,10 @@ class EDCircle : public EDLine {
  protected:
   std::shared_ptr<GrayImage> image_;
 
-  std::vector<Circle> circles_;
-  std::vector<Ellipse> ellipses_;
-  std::vector<Arc> arcs_;
+  std::list<Circle> circles_;
+  std::list<Ellipse> ellipses_;
+  std::list<Arc> arcs_;
+  std::list<Arc> extended_arcs_;
 
   float circle_fitting_error_threshold_;
   float ellipse_fitting_error_threshold_;
