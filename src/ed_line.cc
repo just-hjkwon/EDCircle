@@ -35,16 +35,16 @@ bool EDLine::isValidLineSegment(const Line &line) {
   for (const auto &e : edge_segment) {
     std::size_t offset = get_offset(e.position);
 
-    float gx = x_gradient_->buffer()[offset];
-    float gy = y_gradient_->buffer()[offset];
+    int gx = gx_.buffer()[offset];
+    int gy = gy_.buffer()[offset];
 
     if (gy < 0) {
-      gy *= -1.0f;
+      gy *= -1;
     } else {
-      gx *= -1.0f;
+      gx *= -1;
     }
 
-    float edge_degree = atan2(gx, gy);
+    float edge_degree = atan2(float(gx), float(gy));
     float degree_difference = abs(line_angle - edge_degree);
     if (line_angle >= 0.0f && edge_degree < 0.0f) {
       degree_difference = std::min(degree_difference,

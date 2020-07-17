@@ -161,7 +161,7 @@ void DetectCircle(cv::Mat &cv_image) {
     circle.Draw(circle_and_ellipse_image, cv::Scalar(255, 255, 0));
   }
   for (auto ellipse : ellipses) {
-    ellipse.Draw(circle_and_ellipse_image, cv::Scalar(255, 255, 0));
+    ellipse.Draw(circle_and_ellipse_image, cv::Scalar(0, 255, 255));
   }
 
   cv::imshow("Lines", lines_image);

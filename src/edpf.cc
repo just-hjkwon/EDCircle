@@ -51,10 +51,9 @@ void EDPF::DetectEdge(GrayImage &image) {
 }
 
 void EDPF::SortAnchors() {
-  std::sort(anchors_.begin(), anchors_.end(),
-            [=](const Edgel &a, const Edgel &b) -> bool {
-              return a.magnitude > b.magnitude;
-            });
+  anchors_.sort([=](const Edgel &a, const Edgel &b) -> bool {
+    return a.magnitude > b.magnitude;
+  });
 }
 
 void EDPF::PrepareNFA() {
@@ -66,8 +65,8 @@ void EDPF::PrepareNFA() {
   start = std::chrono::system_clock::now();
 
   std::vector<float> magnitudes;
-  magnitudes.insert(magnitudes.end(), magnitude_->buffer(),
-                    magnitude_->buffer() + width_ * height_);
+  magnitudes.insert(magnitudes.end(), magnitude_.buffer(),
+                    magnitude_.buffer() + width_ * height_);
 
   std::sort(magnitudes.begin(), magnitudes.end());
 
@@ -90,7 +89,8 @@ void EDPF::PrepareNFA() {
   }
   int count = magnitudes.size() - zero_count;
 
-  std::sort(magnitude_cumulative_distribution_.begin(), magnitude_cumulative_distribution_.end(),
+  std::sort(magnitude_cumulative_distribution_.begin(),
+            magnitude_cumulative_distribution_.end(),
             [](const std::pair<float, float> &a,
                const std::pair<float, float> &b) { return a.first > b.first; });
 
