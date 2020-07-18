@@ -14,7 +14,7 @@ class Line {
  public:
   Position begin() const;
   Position end() const;
-  Position vector() const;
+  Position line_vector() const;
 
   float length() const;
 

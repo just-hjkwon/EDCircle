@@ -99,8 +99,8 @@ std::vector<std::vector<Line>> EDCircle::ExtractArcCandidates(
   for (auto i = 1; i < lines.size(); ++i) {
     lengths.push_back(lines[i].length());
 
-    Position prev_vector = lines[i - 1].vector();
-    Position cur_vector = lines[i].vector();
+    Position prev_vector = lines[i - 1].line_vector();
+    Position cur_vector = lines[i].line_vector();
 
     float dot_product =
         float(prev_vector.x * cur_vector.x + prev_vector.y * cur_vector.y);

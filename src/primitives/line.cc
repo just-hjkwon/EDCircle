@@ -23,7 +23,7 @@ Position Line::begin() const { return edge_segment_.front().position; }
 
 Position Line::end() const { return edge_segment_.back().position; }
 
-Position Line::vector() const {
+Position Line::line_vector() const {
   return Position(
       edge_segment_.back().position.x - edge_segment_.front().position.x,
       edge_segment_.back().position.y - edge_segment_.front().position.y);
