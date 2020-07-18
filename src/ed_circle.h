@@ -26,15 +26,14 @@ class EDCircle : public EDLine {
       const std::vector<Line>& line_segments);
   void ExtendArcsAndDetectCircle();
   void ExtendArcsAndDetectEllipse();
-  void ValidateCircleAndEllipse();
-  bool isValidCircle(const Circle& circle);
-  bool isValidEllipse(const Ellipse& ellipse);
+  void ValidateCircleAndEllipse(GrayImage& image);
+  bool IsValidCircle(const Circle& circle, GrayImage& image);
+  bool IsValidEllipse(const Ellipse& ellipse, GrayImage& image);
 
   float getCircleNFA(int circumference_length, int aligned_count);
 
  protected:
-  std::shared_ptr<GrayImage> image_;
-
+  std::list<EdgeSegment> not_closed_edge_segmnets_;
   std::list<Circle> circles_;
   std::list<Ellipse> ellipses_;
   std::list<Arc> arcs_;

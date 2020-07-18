@@ -96,7 +96,7 @@ Circle Circle::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   return Circle(center_x, center_y, radius, error);
 }
 
-Circle Circle::FitFromEdgeSegment(const std::vector<Line>& lines) {
+Circle Circle::FitFromLines(const std::vector<Line>& lines) {
   EdgeSegment whole_edge_segment;
 
   for (const auto& line : lines) {

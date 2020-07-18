@@ -23,7 +23,7 @@ void EDLine::DetectLine(GrayImage &image) {
 
 std::list<Line> EDLine::lines() { return lines_; }
 
-bool EDLine::isValidLineSegment(const Line &line) {
+bool EDLine::IsValidLine(const Line &line) {
   float line_angle = line.get_angle();
 
   if (line_angle >= M_PI / 2.0f) {
@@ -64,7 +64,7 @@ bool EDLine::isValidLineSegment(const Line &line) {
     }
   }
 
-  float nfa = getSegmentNFA(segment_length, aligned_edge_count);
+  float nfa = getLineNFA(segment_length, aligned_edge_count);
 
   if (nfa <= 1.0f) {
     return true;
@@ -73,7 +73,7 @@ bool EDLine::isValidLineSegment(const Line &line) {
   }
 }
 
-float EDLine::getSegmentNFA(int segment_length, int aligned_count) {
+float EDLine::getLineNFA(int segment_length, int aligned_count) {
   const float N = float(width_ * height_ * width_ * height_);
 
   float factorial = 0.0f;
@@ -107,10 +107,10 @@ void EDLine::ExtractLine() {
   std::list<Line> lines;
 
   for (auto &edge_segment : edge_segments_) {
-    std::vector<Line> line_segments = ExtractLineSegments(edge_segment);
+    std::vector<Line> line_segments = ExtractLinesFromEdgeSegment(edge_segment);
 
     for (auto &line : line_segments) {
-      if (isValidLineSegment(line) == true) {
+      if (IsValidLine(line) == true) {
         lines.push_back(line);
       }
     }
@@ -119,7 +119,7 @@ void EDLine::ExtractLine() {
   lines_ = lines;
 }
 
-std::vector<Line> EDLine::ExtractLineSegments(const EdgeSegment &edge_segment) {
+std::vector<Line> EDLine::ExtractLinesFromEdgeSegment(const EdgeSegment &edge_segment) {
   std::list<Line> lines;
 
   EdgeSegment::const_iterator line_candidate_begin = edge_segment.begin();

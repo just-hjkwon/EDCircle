@@ -19,10 +19,18 @@ elseif(${CMAKE_HOST_WIN32})
         message(FATAL_ERROR "Set the OPENCV_VERSION variable. For example, if you want to use opencv-3.4.7, set OPENCV_VERSION as 347.")
     endif()
 
-    if(${CMAKE_GENERATOR_PLATFORM} STREQUAL "Win32")
-        set(OPENCV_ARCHITECTURE "x86")
-    elseif(${CMAKE_GENERATOR_PLATFORM} STREQUAL "x64")
-        set(OPENCV_ARCHITECTURE "x64")
+    if(${CMAKE_GENERATOR_PLATFORM})
+        if(${CMAKE_GENERATOR_PLATFORM} STREQUAL "Win32")
+            set(OPENCV_ARCHITECTURE "x86")
+        elseif(${CMAKE_GENERATOR_PLATFORM} STREQUAL "x64")
+            set(OPENCV_ARCHITECTURE "x64")
+        endif()
+    else()
+        if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "^[Xx]86$")
+            set(OPENCV_ARCHITECTURE "x86")
+        elseif(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "^[Aa][Mm][Dd]64$")
+            set(OPENCV_ARCHITECTURE "x64")
+        endif()        
     endif()
 
     string(REGEX REPLACE "0$" "" OPENCV_TOOLSET "${MSVC_TOOLSET_VERSION}")
@@ -49,7 +57,7 @@ target_sources(${TARGET}
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_line.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_circle.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/ed_circle.h"	
-	"${CMAKE_CURRENT_SOURCE_DIR}/util.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/util.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/util.h"	
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/line.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/primitives/line.cc"
