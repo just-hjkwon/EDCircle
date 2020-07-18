@@ -64,7 +64,7 @@ bool EDLine::IsValidLine(const Line &line) {
     }
   }
 
-  float nfa = getSegmentNFA(segment_length, aligned_edge_count);
+  float nfa = getLineNFA(segment_length, aligned_edge_count);
 
   if (nfa <= 1.0f) {
     return true;
@@ -73,7 +73,7 @@ bool EDLine::IsValidLine(const Line &line) {
   }
 }
 
-float EDLine::getSegmentNFA(int segment_length, int aligned_count) {
+float EDLine::getLineNFA(int segment_length, int aligned_count) {
   const float N = float(width_ * height_ * width_ * height_);
 
   float factorial = 0.0f;

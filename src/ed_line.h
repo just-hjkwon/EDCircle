@@ -19,11 +19,10 @@ class EDLine : public EDPF {
   std::vector<Line> ExtractLinesFromEdgeSegment(const EdgeSegment &segment);
 
   bool IsValidLine(const Line &line);
+  float getLineNFA(int segment_length, int aligned_count);
 
  protected:
   std::list<Line> lines_;
-
-  float getSegmentNFA(int segment_length, int aligned_count);
 
  protected:
   int minimum_line_length_ = 0.0f;
