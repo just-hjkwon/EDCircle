@@ -16,9 +16,9 @@ class EDLine : public EDPF {
 
  protected:
   void ExtractLine();
-  std::vector<Line> ExtractLineSegments(const EdgeSegment &segment);
+  std::vector<Line> ExtractLinesFromEdgeSegment(const EdgeSegment &segment);
 
-  bool isValidLineSegment(const Line &line);
+  bool IsValidLine(const Line &line);
 
  protected:
   std::list<Line> lines_;

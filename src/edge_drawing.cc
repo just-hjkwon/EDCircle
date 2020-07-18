@@ -33,7 +33,7 @@ void EdgeDrawing::DetectEdge(GrayImage& image) {
   STOPWATCHSTOP(verbose_, "EdgeDrawing::ExtractAnchor - ")
 
   STOPWATCHSTART(verbose_)
-  ConnectingAnchors();
+  ConnectAnchor();
   STOPWATCHSTOP(verbose_, "EdgeDrawing::ConnectingAnchors - ")
 }
 
@@ -98,7 +98,7 @@ void EdgeDrawing::ExtractAnchor() {
   }
 }
 
-void EdgeDrawing::ConnectingAnchors() {
+void EdgeDrawing::ConnectAnchor() {
   edge_map_.Reset(width_, height_);
 
   auto direction_map_ptr = direction_map_.buffer();

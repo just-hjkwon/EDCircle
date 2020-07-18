@@ -23,7 +23,7 @@ void EDPF::DetectEdge(GrayImage &image) {
   STOPWATCHSTOP(verbose_, "EDPF::SortAnchors - ")
 
   STOPWATCHSTART(verbose_)
-  ConnectingAnchors();
+  ConnectAnchor();
   STOPWATCHSTOP(verbose_, "EDPF::ConnectingAnchors - ")
 
   STOPWATCHSTART(verbose_)

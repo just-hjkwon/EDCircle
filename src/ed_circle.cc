@@ -556,7 +556,7 @@ void EDCircle::ExtractArcs() {
   arcs_.clear();
 
   for (const auto& edge : edge_segments_) {
-    std::vector<Line> lines = ExtractLineSegments(edge);
+    std::vector<Line> lines = ExtractLinesFromEdgeSegment(edge);
     lines_.insert(lines_.end(), lines.begin(), lines.end());
 
     std::vector<std::vector<Line>> arc_candidates = ExtractArcCandidates(lines);
