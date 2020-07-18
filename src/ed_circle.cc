@@ -374,7 +374,7 @@ void EDCircle::ValidateCircleAndEllipse(GrayImage &image) {
   std::list<Circle> circles;
 
   for (const auto& c : circles_) {
-    if (isValidCircle(c, image) == true) {
+    if (IsValidCircle(c, image) == true) {
       circles.push_back(c);
     }
   }
@@ -384,7 +384,7 @@ void EDCircle::ValidateCircleAndEllipse(GrayImage &image) {
   std::list<Ellipse> ellipses;
 
   for (const auto& e : ellipses_) {
-    if (isValidEllipse(e, image) == true) {
+    if (IsValidEllipse(e, image) == true) {
       ellipses.push_back(e);
     }
   }
@@ -392,7 +392,7 @@ void EDCircle::ValidateCircleAndEllipse(GrayImage &image) {
   ellipses_ = ellipses;
 }
 
-bool EDCircle::isValidCircle(const Circle& circle, GrayImage &image) {
+bool EDCircle::IsValidCircle(const Circle& circle, GrayImage &image) {
   float circumference = circle.get_circumference();
   float degree_step = 1.0f;
 
@@ -453,7 +453,7 @@ bool EDCircle::isValidCircle(const Circle& circle, GrayImage &image) {
   }
 }
 
-bool EDCircle::isValidEllipse(const Ellipse& ellipse, GrayImage& image) {
+bool EDCircle::IsValidEllipse(const Ellipse& ellipse, GrayImage& image) {
   float circumference = ellipse.get_circumference();
   float degree_step = 1.0;
 
