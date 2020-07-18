@@ -217,7 +217,7 @@ void EDCircle::ExtendArcsAndDetectCircle() {
       new_lines.insert(new_lines.end(), candidate_lines.begin(),
                        candidate_lines.end());
 
-      Circle circle = Circle::FitFromEdgeSegment(new_lines);
+      Circle circle = Circle::FitFromLines(new_lines);
 
       if (circle.fitting_error() <= 1.5f) {
         extended_lines = new_lines;
@@ -317,7 +317,7 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
       new_lines.insert(new_lines.end(), candidate_lines.begin(),
                        candidate_lines.end());
 
-      Ellipse ellipse = Ellipse::FitFromEdgeSegment(new_lines);
+      Ellipse ellipse = Ellipse::FitFromLines(new_lines);
 
       if (ellipse.fitting_error() <= 1.5f) {
         extended_lines = new_lines;
@@ -334,7 +334,7 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
     if (extended_count > 0) {
       Arc arc(extended_lines);
 
-      Ellipse ellipse = Ellipse::FitFromEdgeSegment(extended_lines);
+      Ellipse ellipse = Ellipse::FitFromLines(extended_lines);
 
       float length = arc.length();
       float circumference = ellipse.get_circumference();
@@ -347,7 +347,7 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
       }
     } else {
       Arc arc(extended_lines);
-      Ellipse ellipse = Ellipse::FitFromEdgeSegment(extended_lines);
+      Ellipse ellipse = Ellipse::FitFromLines(extended_lines);
 
       if (ellipse.fitting_error() <= 1.5f) {
         float length = arc.length();
@@ -562,7 +562,7 @@ void EDCircle::ExtractArcs() {
     std::vector<std::vector<Line>> arc_candidates = ExtractArcCandidates(lines);
 
     for (const auto& candidate : arc_candidates) {
-      Circle circle = Circle::FitFromEdgeSegment(candidate);
+      Circle circle = Circle::FitFromLines(candidate);
 
       if (circle.fitting_error() <= 1.5f) {
         Arc arc(candidate);
@@ -581,7 +581,7 @@ void EDCircle::ExtractArcs() {
         chunk_of_candidate.insert(chunk_of_candidate.end(), search_begin,
                                   search_end);
 
-        Circle circle = Circle::FitFromEdgeSegment(chunk_of_candidate);
+        Circle circle = Circle::FitFromLines(chunk_of_candidate);
 
         if (circle.fitting_error() > 1.5f && chunk_of_candidate.size() >= 3) {
           if (is_found == true) {

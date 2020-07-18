@@ -1,7 +1,7 @@
 #include "arc.h"
 
 Arc::Arc(const std::vector<Line>& lines)
-    : lines_(lines), fitted_circle_(Circle::FitFromEdgeSegment(lines)) {
+    : lines_(lines), fitted_circle_(Circle::FitFromLines(lines)) {
   length_ = 0.0f;
   for (const auto& line : lines_) {
     length_ += line.length();
