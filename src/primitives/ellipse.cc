@@ -130,7 +130,7 @@ Ellipse Ellipse::FitFromEdgeSegment(const EdgeSegment& edge_segment) {
   return ellipse;
 }
 
-Ellipse Ellipse::FitFromEdgeSegment(const std::vector<Line>& lines) {
+Ellipse Ellipse::FitFromLines(const std::vector<Line>& lines) {
   EdgeSegment whole_edge_segment;
 
   for (const auto& line : lines) {

@@ -31,7 +31,7 @@ class EdgeDrawing {
  protected:
   void PrepareEdgeMap(GrayImage& image);
   void ExtractAnchor();
-  void ConnectingAnchors();
+  void ConnectAnchor();
   Position FindNextConnectingPosition(Position current,
                                       ConnectingAim direction);
 
