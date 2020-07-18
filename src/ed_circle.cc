@@ -16,9 +16,6 @@ EDCircle::EDCircle() {
 }
 
 void EDCircle::DetectCircle(GrayImage& image) {
-  image_ = std::make_shared<GrayImage>(image.width(), image.height(),
-                                       image.buffer());
-
   DetectEdge(image);
 
   STOPWATCHSTART(verbose_)
@@ -39,7 +36,7 @@ void EDCircle::DetectCircle(GrayImage& image) {
   STOPWATCHSTOP(verbose_, "EDCircle::ExtendArcsAndDetectEllipse - ")
 
   STOPWATCHSTART(verbose_)
-  ValidateCircleAndEllipse();
+  ValidateCircleAndEllipse(image);
   STOPWATCHSTOP(verbose_, "EDCircle::ValidateCircleAndEllipse - ")
 }
 
@@ -52,17 +49,22 @@ std::list<Arc> EDCircle::arcs() { return arcs_; }
 std::list<Arc> EDCircle::extended_arcs() { return extended_arcs_; }
 
 void EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment() {
+  not_closed_edge_segmnets_.clear();
   circles_.clear();
   ellipses_.clear();
 
-  for (auto edge_it = edge_segments_.begin();
-       edge_it != edge_segments_.end();) {
+  not_closed_edge_segmnets_.insert(not_closed_edge_segmnets_.end(),
+                                   edge_segments_.begin(),
+                                   edge_segments_.end());
+
+  for (auto edge_it = not_closed_edge_segmnets_.begin();
+       edge_it != not_closed_edge_segmnets_.end();) {
     if (edge_it->isClosed() == true) {
       Circle circle = Circle::FitFromEdgeSegment(*edge_it);
 
       if (circle.fitting_error() < circle_fitting_error_threshold_) {
         circles_.push_back(circle);
-        edge_it = edge_segments_.erase(edge_it);
+        edge_it = not_closed_edge_segmnets_.erase(edge_it);
         continue;
       }
 
@@ -70,7 +72,7 @@ void EDCircle::DetectCircleAndEllipseFromClosedEdgeSegment() {
 
       if (ellipse.fitting_error() < ellipse_fitting_error_threshold_) {
         ellipses_.push_back(ellipse);
-        edge_it = edge_segments_.erase(edge_it);
+        edge_it = not_closed_edge_segmnets_.erase(edge_it);
         continue;
       }
     }
@@ -368,11 +370,11 @@ void EDCircle::ExtendArcsAndDetectEllipse() {
   extended_arcs_ = extended_arcs;
 }
 
-void EDCircle::ValidateCircleAndEllipse() {
+void EDCircle::ValidateCircleAndEllipse(GrayImage &image) {
   std::list<Circle> circles;
 
   for (const auto& c : circles_) {
-    if (isValidCircle(c) == true) {
+    if (isValidCircle(c, image) == true) {
       circles.push_back(c);
     }
   }
@@ -382,7 +384,7 @@ void EDCircle::ValidateCircleAndEllipse() {
   std::list<Ellipse> ellipses;
 
   for (const auto& e : ellipses_) {
-    if (isValidEllipse(e) == true) {
+    if (isValidEllipse(e, image) == true) {
       ellipses.push_back(e);
     }
   }
@@ -390,7 +392,7 @@ void EDCircle::ValidateCircleAndEllipse() {
   ellipses_ = ellipses;
 }
 
-bool EDCircle::isValidCircle(const Circle& circle) {
+bool EDCircle::isValidCircle(const Circle& circle, GrayImage &image) {
   float circumference = circle.get_circumference();
   float degree_step = 1.0f;
 
@@ -415,7 +417,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
   int circumference_length = int(positions.size());
   int aligned_count = 0;
 
-  unsigned char* buffer = image_->buffer();
+  unsigned char* buffer = image.buffer();
 
   for (auto p : positions) {
     int offset = p.y * width_ + p.x;
@@ -451,7 +453,7 @@ bool EDCircle::isValidCircle(const Circle& circle) {
   }
 }
 
-bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
+bool EDCircle::isValidEllipse(const Ellipse& ellipse, GrayImage& image) {
   float circumference = ellipse.get_circumference();
   float degree_step = 1.0;
 
@@ -476,7 +478,7 @@ bool EDCircle::isValidEllipse(const Ellipse& ellipse) {
   int circumference_length = int(positions.size());
   int aligned_count = 0;
 
-  unsigned char* buffer = image_->buffer();
+  unsigned char* buffer = image.buffer();
 
   for (auto p : positions) {
     int offset = p.y * width_ + p.x;
@@ -555,7 +557,7 @@ void EDCircle::ExtractArcs() {
 
   arcs_.clear();
 
-  for (const auto& edge : edge_segments_) {
+  for (const auto& edge : not_closed_edge_segmnets_) {
     std::vector<Line> lines = ExtractLinesFromEdgeSegment(edge);
     lines_.insert(lines_.end(), lines.begin(), lines.end());
 
